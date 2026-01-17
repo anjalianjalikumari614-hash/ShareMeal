@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShareMeal | Waste Less, Feed More</title>
+
+    <!-- Google Fonts: 'Outfit' for headings, 'Inter' for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="#" class="logo">Share<span class="highlight">Meal</span></a>
+            <ul class="nav-links">
+                <li><a href="#" class="active">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="/login" class="btn-login">Login</a></li>
+            </ul>
+            <div class="mobile-toggle">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <div class="badge">Ranchi GDG Hackathon 2024</div>
+                <h1>Bridge the Gap Between <br><span class="gradient-text">Surplus & Hunger</span></h1>
+                <p>Join the ShareMeal movement. We connect hotels, weddings, and restaurants with local NGOs to ensure
+                    no food goes to waste.</p>
+                <div class="hero-buttons">
+                    <a href="/donate" class="btn btn-primary"><i class="fa-solid fa-hand-holding-heart"></i> Donate
+                        Food</a>
+                    <a href="/find-food" class="btn btn-secondary">I Need Food</a>
+                </div>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-number">0+</span>
+                        <span class="stat-label">Meals Saved</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">0+</span>
+                        <span class="stat-label">NGOs Partnered</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <!-- We will add an illustration here later, for now using a conceptual placeholder shape -->
+                <div class="glowing-circle"></div>
+                <div class="card-float donor-card">
+                    <i class="fa-solid fa-utensils"></i>
+                    <div>
+                        <strong>Hotel City Inn</strong>
+                        <small>Just posted 50 meals</small>
+                    </div>
+                </div>
+                <div class="card-float ngo-card">
+                    <i class="fa-solid fa-users"></i>
+                    <div>
+                        <strong>Ranchi Help</strong>
+                        <small>Claimed 5 mins ago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- How It Works Section -->
+    <section class="features">
+        <div class="container">
+            <h2 class="section-title">How ShareMeal Works</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="icon-box"><i class="fa-solid fa-store"></i></div>
+                    <h3>1. Donors Post</h3>
+                    <p>Hotels and events assist by listing surplus food details instantly.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon-box"><i class="fa-solid fa-bell"></i></div>
+                    <h3>2. NGOs Notified</h3>
+                    <p>Nearby NGOs get real-time alerts and claim the food.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon-box"><i class="fa-solid fa-truck-fast"></i></div>
+                    <h3>3. Quick Delivery</h3>
+                    <p>Volunteers or partners ensure safe and fast transfer.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="features" style="background: var(--bg-color);">
+        <div class="container">
+            <h2 class="section-title">About Our Mission</h2>
+            <div class="hero-container" style="min-height: auto; align-items: start;">
+                <div class="hero-content">
+                    <p style="font-size: 1.1rem; line-height: 1.8;">
+                        ShareMeal is a community-driven platform designed to bridge the gap between food surplus and
+                        hunger.
+                        We believe that no edible food should go to waste when there are people in need.
+                        <br><br>
+                        By connecting hotels, restaurants, and event organizers with local NGOs, we facilitate the
+                        timely recovery and distribution of surplus food.
+                    </p>
+                </div>
+                <div class="hero-image" style="height: auto;">
+                    <div class="stats" style="border: none; flex-direction: column; gap: 20px;">
+                        <div class="stat-item">
+                            <span class="stat-number">1+ Ton</span>
+                            <span class="stat-label">Food Saved Annually</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">500+</span>
+                            <span class="stat-label">Happy Families</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" style="padding: 80px 0; background: var(--surface-color);">
+        <div class="container">
+            <h2 class="section-title">Get in Touch</h2>
+            <div class="form-wrapper" style="margin: 0 auto; box-shadow: none; border: none; padding: 0;">
+                <div style="text-align: center; margin-bottom: 40px; color: var(--text-secondary);">
+                    Have questions or want to partner with us? Reach out!
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card" style="text-align: center;">
+                        <div class="icon-box" style="margin: 0 auto 20px;"><i class="fa-solid fa-envelope"></i></div>
+                        <h3>Email Us</h3>
+                        <p>support@sharemeal.com</p>
+                    </div>
+                    <div class="feature-card" style="text-align: center;">
+                        <div class="icon-box" style="margin: 0 auto 20px;"><i class="fa-solid fa-phone"></i></div>
+                        <h3>Call Us</h3>
+                        <p>+91 98765 43210</p>
+                    </div>
+                    <div class="feature-card" style="text-align: center;">
+                        <div class="icon-box" style="margin: 0 auto 20px;"><i class="fa-solid fa-location-dot"></i>
+                        </div>
+                        <h3>Visit Us</h3>
+                        <p>Ranchi, Jharkhand, India</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="/app.js"></script>
+</body>
+
+</html>

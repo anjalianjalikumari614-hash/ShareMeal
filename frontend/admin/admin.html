@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | ShareMeal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            overflow-x: hidden;
+            background-color: var(--bg-color);
+        }
+
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+            padding-top: 80px;
+            /* Navbar height */
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--surface-color);
+            border-right: var(--glass-border);
+            padding: 20px;
+            position: fixed;
+            height: calc(100vh - 80px);
+            left: 0;
+            top: 80px;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary-color);
+        }
+
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--surface-color);
+            padding: 25px;
+            border-radius: 12px;
+            border: var(--glass-border);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-info h3 {
+            font-size: 2rem;
+            font-family: var(--font-heading);
+            margin-bottom: 5px;
+        }
+
+        .stat-info p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Users Table section */
+        .content-section {
+            background: var(--surface-color);
+            border-radius: 16px;
+            border: var(--glass-border);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+        }
+
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: var(--text-secondary);
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .role-badge {
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            text-transform: capitalize;
+        }
+
+        .role-donor {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--primary-color);
+        }
+
+        .role-ngo {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-color);
+        }
+
+        .role-delivery {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .role-admin {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #334155;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="/" class="logo">Share<span class="highlight">Meal</span></a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="#" class="active">Dashboard</a></li>
+                <li><a href="/" class="btn-login" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <ul class="sidebar-menu">
+                <li>
+                    <div class="sidebar-link active" onclick="showSection('overview')">
+                        <i class="fa-solid fa-chart-pie"></i> Overview
+                    </div>
+                </li>
+                <li>
+                    <div class="sidebar-link" onclick="showSection('users')">
+                        <i class="fa-solid fa-users"></i> User Management
+                    </div>
+                </li>
+                <li>
+                    <div class="sidebar-link" onclick="showSection('donations')">
+                        <i class="fa-solid fa-hand-holding-heart"></i> Donation Analytics
+                    </div>
+                </li>
+                <li>
+                    <div class="sidebar-link" onclick="showSection('settings')">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </div>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Overview Section -->
+            <div id="overview-section">
+                <h1 style="font-family: var(--font-heading); margin-bottom: 30px;">Dashboard Overview</h1>
+
+                <div class="stats-grid">
+                    <div class="stat-card" onclick="filterUsers('all')">
+                        <div class="stat-icon"
+                            style="background: rgba(16, 185, 129, 0.1); color: var(--primary-color);">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-users">0</h3>
+                            <p>Total Users</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="filterUsers('donor')">
+                        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                            <i class="fa-solid fa-hand-holding-heart"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-donors">0</h3>
+                            <p>Active Donors</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="filterUsers('ngo')">
+                        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent-color);">
+                            <i class="fa-solid fa-building-ngo"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-ngos">0</h3>
+                            <p>Partner NGOs</p>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="filterUsers('delivery')">
+                        <div class="stat-icon" style="background: rgba(147, 51, 234, 0.1); color: #9333ea;">
+                            <i class="fa-solid fa-truck-fast"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="total-delivery">0</h3>
+                            <p>Delivery Persons</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Recent Users</h2>
+                        <button class="btn btn-secondary" onclick="showSection('users')">View All</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="recent-users-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Section (Hidden by default) -->
+            <div id="users-section" style="display: none;">
+                <h1 id="user-section-title" style="font-family: var(--font-heading); margin-bottom: 30px;">User
+                    Management</h1>
+                <div class="content-section">
+                    <div class="table-container">
+                        <table id="all-users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder Sections -->
+            <!-- Donation Analytics Section -->
+            <div id="donations-section" style="display: none;">
+                <h1 style="font-family: var(--font-heading); margin-bottom: 30px;">Donation Analytics</h1>
+
+                <!-- Summary Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"
+                            style="background: rgba(16, 185, 129, 0.1); color: var(--primary-color);">
+                            <i class="fa-solid fa-bowl-food"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="ana-total">0</h3>
+                            <p>Total Donations</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent-color);">
+                            <i class="fa-solid fa-hand-holding-heart"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="ana-claimed">0</h3>
+                            <p>Meals Claimed</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 40px;">
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2>Status Distribution</h2>
+                        </div>
+                        <div style="height: 250px;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2>Dietary Breakdown</h2>
+                        </div>
+                        <div style="height: 250px;">
+                            <canvas id="dietChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Donations Table -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Recent Donations</h2>
+                        <button class="btn btn-secondary" onclick="fetchDonationAnalytics()">Refresh</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="analytics-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Food</th>
+                                    <th>Donor</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="settings-section" style="display: none;">
+                <h1 style="font-family: var(--font-heading); margin-bottom: 30px;">Platform Settings</h1>
+
+                <!-- System Controls -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>System Controls</h2>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <h3 style="margin-bottom: 5px;">Allow New Registrations</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem;">Enable or disable new user
+                                    signups.</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <h3 style="margin-bottom: 5px;">Maintenance Mode</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem;">Take the platform offline
+                                    for updates.</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h3 style="margin-bottom: 5px;">Email Notifications</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.9rem;">Receive alerts for critical
+                                    system events.</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Management -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Data Management</h2>
+                    </div>
+                    <div style="display: flex; gap: 20px; align-items: center;">
+                        <p style="color: var(--text-secondary); flex: 1;">Download a complete report of all donations in
+                            CSV format for offline analysis.</p>
+                        <a href="/api/admin/export/donations" class="btn btn-primary" style="text-decoration:none;">
+                            <i class="fa-solid fa-file-csv" style="margin-right: 8px;"></i> Export Data
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Certificate Management -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Certificate Template</h2>
+                    </div>
+                    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 300px;">
+                            <p style="color: var(--text-secondary); margin-bottom: 15px;">Upload a custom certificate
+                                template. This image will be used as the background for donor appreciation certificates.
+                            </p>
+                            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Recommended size:
+                                800x600px (Landscape), PNG/JPG.</p>
+
+                            <input type="file" id="certInput" accept="image/*" style="display: none;"
+                                onchange="previewCertificate(this)">
+
+                            <div style="display: flex; gap: 10px;">
+                                <button onclick="document.getElementById('certInput').click()" class="btn"
+                                    style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                                    <i class="fa-solid fa-upload"></i> Select Image
+                                </button>
+                                <button onclick="uploadCertificate()" class="btn btn-primary" id="uploadCertBtn"
+                                    disabled>
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+                                </button>
+                            </div>
+                        </div>
+                        <div style="flex: 1; min-width: 300px; text-align: center;">
+                            <p style="color: var(--text-secondary); margin-bottom: 10px;">Current Template Preview</p>
+                            <div
+                                style="border: 2px dashed rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; display: inline-block;">
+                                <img id="certPreview" src="/uploads/certificate_template.png"
+                                    onerror="this.src='https://via.placeholder.com/800x600?text=No+Template+Uploaded'"
+                                    style="max-width: 100%; height: auto; border-radius: 4px; max-height: 250px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Profile -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2>Admin Profile</h2>
+                    </div>
+                    <div style="max-width: 500px;">
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">Current
+                                Password</label>
+                            <input type="password"
+                                style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px;"
+                                placeholder="••••••••">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 8px; color: var(--text-secondary);">New
+                                Password</label>
+                            <input type="password"
+                                style="width: 100%; padding: 10px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px;"
+                                placeholder="••••••••">
+                        </div>
+                        <button class="btn btn-primary">Update Password</button>
+                    </div>
+                </div>
+            </div>
+
+    </div>
+    </div>
+
+    </main>
+    </div>
+
+    <script>
+        // Data Fetching
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/admin/stats');
+                const data = await res.json();
+
+                document.getElementById('total-users').innerText = data.total_users;
+                document.getElementById('total-donors').innerText = data.donors;
+                document.getElementById('total-ngos').innerText = data.ngos;
+                document.getElementById('total-delivery').innerText = data.delivery;
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        async function fetchUsers(filterRole = 'all') {
+            try {
+                const res = await fetch('/api/admin/users');
+                const users = await res.json();
+
+                const tbody = document.querySelector('#all-users-table tbody');
+                const recentTbody = document.querySelector('#recent-users-table tbody');
+
+                // Only clear main table if we are in filtering mode, but recent users should always be refreshed on init
+                tbody.innerHTML = '';
+                if (filterRole === 'all') recentTbody.innerHTML = '';
+
+                let filteredUsers = users;
+                if (filterRole !== 'all') {
+                    filteredUsers = users.filter(user => user.role.toLowerCase() === filterRole);
+                }
+
+                // Populate Table
+                filteredUsers.forEach(user => {
+                    const isSystemAdmin = user.id === 1;
+                    const actionBtn = isSystemAdmin
+                        ? `<span style="color:#64748b; font-size:0.8rem;">Protected</span>`
+                        : `<button onclick="deleteUser(${user.id}, '${user.name}')" style="background:none; border:none; color:#ef4444; cursor:pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.2)'" onmouseout="this.style.transform='scale(1)'" title="Delete User">
+                             <i class="fa-solid fa-trash"></i>
+                           </button>`;
+
+                    const row = `
+                        <tr>
+                            <td>#${user.id}</td>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>${user.phone}</td>
+                            <td><span class="role-badge role-${user.role.toLowerCase()}">${user.role}</span></td>
+                            <td>${actionBtn}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+                // Populate Recent Users (only when not filtering or initial load)
+                if (filterRole === 'all') {
+                    users.slice(0, 5).forEach(user => {
+                        const row = `
+                            <tr>
+                                <td>${user.name}</td>
+                                <td>${user.email}</td>
+                                <td><span class="role-badge role-${user.role.toLowerCase()}">${user.role}</span></td>
+                                <td>Just now</td>
+                            </tr>
+                        `;
+                        recentTbody.innerHTML += row;
+                    });
+                }
+
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            }
+        }
+
+        async function deleteUser(id, name) {
+            if (!confirm(`Are you sure you want to delete user "${name}"? This action cannot be undone.`)) return;
+
+            try {
+                const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert('User deleted successfully.');
+                    fetchUsers(); // Refresh table
+                    fetchStats(); // Refresh stats
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('Failed to connect to server.');
+            }
+        }
+
+        function filterUsers(role) {
+            showSection('users');
+            fetchUsers(role);
+
+            const titles = {
+                'all': 'User Management - All Users',
+                'donor': 'User Management - Active Donors',
+                'ngo': 'User Management - Partner NGOs',
+                'delivery': 'User Management - Delivery Partners'
+            };
+            document.getElementById('user-section-title').innerText = titles[role] || 'User Management';
+        }
+
+        // Emergency Functions
+        async function sendBroadcast() {
+            const message = document.getElementById('broadcast-msg').value;
+            const level = document.getElementById('broadcast-level').value;
+
+            if (!message) return alert("Please enter a message");
+
+            try {
+                const res = await fetch('/api/broadcast/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, level, user_id: 1 }) // Assuming admin is ID 1
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Broadcast sent successfully!');
+                    document.getElementById('broadcast-msg').value = '';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (e) { alert('Network Error'); }
+        }
+
+        async function triggerSOS() {
+            const title = document.getElementById('sos-title').value;
+            const location = document.getElementById('sos-location').value;
+            const message = document.getElementById('sos-msg').value;
+
+            if (!title || !location) return alert("Please fill all fields");
+
+            if (!confirm("Are you sure you want to trigger a system-wide SOS alert?")) return;
+
+            try {
+                const res = await fetch('/api/sos/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, location, message, user_id: 1 })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('SOS Alert Triggered!');
+                    document.getElementById('sos-title').value = '';
+                    document.getElementById('sos-location').value = '';
+                    document.getElementById('sos-msg').value = '';
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (e) { alert('Network Error'); }
+        }
+        // Certificate Logic
+        function previewCertificate(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('certPreview').src = e.target.result;
+                    document.getElementById('uploadCertBtn').disabled = false;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function uploadCertificate() {
+            const input = document.getElementById('certInput');
+            if (!input.files || !input.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('file', input.files[0]);
+
+            const btn = document.getElementById('uploadCertBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/admin/upload-certificate', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert('Certificate template uploaded successfully!');
+                    // Force refresh image to show new version
+                    document.getElementById('certPreview').src = result.path;
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Upload failed.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Navigation Logic
+        function showSection(sectionId) {
+            // Hide all sections
+            ['overview', 'users', 'donations', 'settings'].forEach(id => {
+                document.getElementById(id + '-section').style.display = 'none';
+            });
+            // Show target section
+            document.getElementById(sectionId + '-section').style.display = 'block';
+
+            // Update active sidebar link
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.innerText.toLowerCase().includes(sectionId)) {
+                    link.classList.add('active');
+                }
+            });
+
+            if (sectionId === 'donations') {
+                fetchDonationAnalytics();
+            }
+        }
+
+        function logout() {
+            // Add any logout logic here (clearing tokens etc if we had them)
+            window.location.href = '/';
+        }
+
+        // Init
+        // Analytics Globals
+        let statusChartInstance = null;
+        let dietChartInstance = null;
+
+        async function fetchDonationAnalytics() {
+            try {
+                const res = await fetch('/api/admin/analytics/donations');
+                const data = await res.json();
+
+                // 1. Stats
+                document.getElementById('ana-total').innerText = data.total;
+                const claimed = (data.status['Claimed'] || 0) + (data.status['Picked Up'] || 0) + (data.status['Delivered'] || 0) + (data.status['Completed'] || 0);
+                document.getElementById('ana-claimed').innerText = claimed;
+
+                // 2. Table
+                const tbody = document.querySelector('#analytics-table tbody');
+                tbody.innerHTML = '';
+                data.recent.forEach(d => {
+                    const date = d.timestamp ? d.timestamp.split(' ')[0] : 'N/A';
+                    const row = `
+                        <tr>
+                            <td>#${d.id}</td>
+                            <td>${d.food_name || d.food_type}</td>
+                            <td>${d.donor_name || 'Donor #' + d.donor_id}</td>
+                            <td><span class="role-badge role-${d.status.toLowerCase()}">${d.status}</span></td>
+                            <td>${date}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+
+                // 3. Charts
+                if (data.status && data.diet) {
+                    renderCharts(data);
+                }
+
+            } catch (e) { console.error(e); }
+        }
+
+        function renderCharts(data) {
+            // Status Chart
+            const ctxStatus = document.getElementById('statusChart').getContext('2d');
+            if (statusChartInstance) statusChartInstance.destroy();
+
+            statusChartInstance = new Chart(ctxStatus, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data.status),
+                    datasets: [{
+                        data: Object.values(data.status),
+                        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#94a3b8', font: { family: 'Inter' } } }
+                    }
+                }
+            });
+
+            // Diet Chart
+            const ctxDiet = document.getElementById('dietChart').getContext('2d');
+            if (dietChartInstance) dietChartInstance.destroy();
+
+            dietChartInstance = new Chart(ctxDiet, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(data.diet),
+                    datasets: [{
+                        data: Object.values(data.diet),
+                        backgroundColor: ['#4ade80', '#f87171'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#94a3b8', font: { family: 'Inter' } } }
+                    }
+                }
+            });
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStats();
+            fetchUsers();
+        });
+    </script>
+</body>
+
+</html>

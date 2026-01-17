@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Delivery Driver Dashboard | ShareMeal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Base CSS -->
+    <link rel="stylesheet" href="/style.css?v=2">
+
+    <style>
+        /* Specific Styles for Delivery Dashboard */
+        :root {
+            --delivery-primary: #10b981;
+            /* Emerald Green for delivery */
+            --delivery-surface: #1e293b;
+            --delivery-bg: #0f172a;
+        }
+
+        body {
+            background-color: var(--delivery-bg);
+            padding-bottom: 80px;
+            /* Space for bottom nav */
+        }
+
+        /* Top Header */
+        .driver-header {
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .driver-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            background-color: var(--delivery-primary);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--delivery-primary);
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 20px;
+        }
+
+        .stat-card-driver {
+            background: var(--delivery-surface);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        /* Task Cards */
+        .task-list {
+            padding: 0 20px;
+        }
+
+        .task-card {
+            background: var(--delivery-surface);
+            border-radius: 12px;
+            padding: 0;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .task-header {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .task-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .bg-new {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .bg-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .task-body {
+            padding: 15px;
+        }
+
+        .route-line {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .route-dots {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 5px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot-pickup {
+            background: #f59e0b;
+        }
+
+        .dot-drop {
+            background: #10b981;
+        }
+
+        .line-connect {
+            width: 2px;
+            flex: 1;
+            background: #334155;
+            margin: 2px 0;
+        }
+
+        .route-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .route-point h4 {
+            color: #f59e0b;
+            margin: 0 0 5px 0;
+            font-size: 0.9rem;
+        }
+
+        .route-point.drop h4 {
+            color: #10b981;
+        }
+
+        .route-point p {
+            color: #cbd5e1;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .route-point small {
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+
+        .task-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .btn-driver {
+            background: transparent;
+            border: none;
+            padding: 15px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+        }
+
+        .btn-driver:first-child {
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-driver:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-accept {
+            width: 100%;
+            background: var(--delivery-primary);
+            color: #022c22;
+            padding: 15px;
+            font-weight: 700;
+            border: none;
+            font-size: 1rem;
+        }
+
+        /* Bottom Nav (Mobile Style) */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--delivery-surface);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            color: #64748b;
+            text-align: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .nav-item.active {
+            color: var(--delivery-primary);
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="driver-header">
+        <h2 style="margin:0; font-size:1.2rem;">Hello, <span id="driverName">Driver</span></h2>
+        <div class="driver-status">
+            <div class="status-indicator"></div>
+            <span style="font-size:0.9rem; color:#94a3b8;">Online</span>
+        </div>
+    </header>
+
+    <!-- Pages Container -->
+    <div id="page-container">
+
+        <!-- PAGE 1: TASKS (Home) -->
+        <div id="view-tasks" class="view-section">
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card-driver">
+                    <div class="stat-val" id="statToday">0</div>
+                    <div class="stat-label">Deliveries Today</div>
+                </div>
+                <div class="stat-card-driver">
+                    <div class="stat-val">4.5h</div>
+                    <div class="stat-label">Online Hours</div>
+                </div>
+            </div>
+
+            <div class="task-list">
+                <h3 style="color:white; margin: 10px 0 20px 0;">New Requests (Nearby)</h3>
+                <div id="newRequestsList">
+                    <p style="text-align:center; color:#64748b;">Finding nearby requests...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 2: ACTIVE JOB -->
+        <div id="view-active" class="view-section" style="display:none; padding:20px;">
+            <h2 style="color:white;">Current Job</h2>
+            <div id="activeJobContainer">
+                <p style="color:#94a3b8;">No active job currently.</p>
+            </div>
+        </div>
+
+        <!-- PAGE 3: HISTORY -->
+        <div id="view-history" class="view-section" style="display:none; padding:20px;">
+            <h2 style="color:white;">Past Deliveries</h2>
+            <div id="historyList">Loading...</div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchView('tasks')">
+            <i class="fa-solid fa-list-check"></i> Requests
+        </button>
+        <button class="nav-item" onclick="switchView('active')">
+            <i class="fa-solid fa-truck-fast"></i> Active Job
+        </button>
+        <button class="nav-item" onclick="switchView('history')">
+            <i class="fa-solid fa-clock-rotate-left"></i> History
+        </button>
+        <button class="nav-item" onclick="logout()">
+            <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+    </nav>
+
+    <!-- Scripts -->
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="/app.js"></script> <!-- Reusing app.js for API calls, but custom logic below -->
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!user || user.role.toLowerCase() !== 'delivery') {
+            window.location.href = '/login';
+        }
+
+        document.getElementById('driverName').innerText = user.name;
+
+        // --- NOTIFICATIONS ---
+        function requestNotificationPermission() {
+            if (!("Notification" in window)) {
+                console.log("This browser does not support desktop notification");
+                return;
+            }
+
+            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission().then((permission) => {
+                    if (permission === "granted") {
+                        console.log("Notification permission granted");
+                    }
+                });
+            }
+        }
+
+        // Request on load
+        requestNotificationPermission();
+
+        function showNotification(title, body) {
+            if (Notification.permission === "granted") {
+                new Notification(title, {
+                    body: body,
+                    icon: 'https://cdn-icons-png.flaticon.com/512/3063/3063823.png'
+                });
+            }
+        }
+
+        // Auto Refresh
+        fetchNewRequests();
+        setInterval(fetchNewRequests, 10000);
+        fetchActiveJob(); // Check if we are already in a job
+
+        // --- NAVIGATION ---
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(`view-${viewName}`).style.display = 'block';
+
+            // Highlight Button (Simulated logic, ideally by index)
+            if (viewName === 'tasks') document.querySelector('.nav-item:nth-child(1)').classList.add('active');
+            if (viewName === 'active') document.querySelector('.nav-item:nth-child(2)').classList.add('active');
+            if (viewName === 'history') {
+                document.querySelector('.nav-item:nth-child(3)').classList.add('active');
+                fetchHistory();
+            }
+        }
+
+        // --- DATA FETCHING ---
+        let lastRequestCount = 0;
+
+        async function fetchNewRequests() {
+            const container = document.getElementById('newRequestsList');
+            try {
+                // Fetch ALL donations
+                const res = await fetch(`${API_BASE_URL}/donations`);
+                const all = await res.json();
+
+                // Filter: Claimed status AND No Delivery Assigned
+                // Filter: Claimed status AND No Delivery Assigned AND Delivery Requested (not self-pickup)
+                const requests = all.filter(d => d.status === 'Claimed' && !d.delivery_by && d.delivery_req !== 0);
+
+                if (requests.length > lastRequestCount) {
+                    // New requests found!
+                    showNotification("New Delivery Request!", `There are ${requests.length} pending deliveries nearby.`);
+                }
+                lastRequestCount = requests.length;
+
+                if (requests.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:#64748b; padding:20px;">No new requests in your area.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                requests.forEach(req => {
+                    const html = `
+                        <div class="task-card">
+                            <div class="task-header">
+                                <span class="task-badge bg-new">New Request</span>
+                                <span style="font-size:0.8rem; color:#94a3b8;">${formatFreshness(req.preparation_time)}</span>
+                            </div>
+                            <div class="task-body">
+                                <div class="route-line">
+                                    <div class="route-dots">
+                                        <div class="dot dot-pickup"></div>
+                                        <div class="line-connect"></div>
+                                        <div class="dot dot-drop"></div>
+                                    </div>
+                                    <div class="route-details">
+                                        <div class="route-point">
+                                            <h4>PICKUP</h4>
+                                            <p>${req.pickup_address}</p>
+                                            <small>${req.quantity} Servings • ${req.food_type}</small>
+                                        </div>
+                                        <div class="route-point drop">
+                                            <h4>DROP-OFF</h4>
+                                            <p>NGO Location (Revealed on Accept)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn-accept" onclick="acceptJob(${req.id})">ACCEPT DELIVERY</button>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function acceptJob(id) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/assign-delivery`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ donation_id: id, delivery_id: user.id })
+                });
+                if (res.ok) {
+                    // Update UI
+                    switchView('active');
+                    fetchActiveJob();
+                } else {
+                    alert('Job no longer available.');
+                    fetchNewRequests();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        let mapInstance = null;
+
+        async function fetchActiveJob() {
+            const container = document.getElementById('activeJobContainer');
+            try {
+                const res = await fetch(`${API_BASE_URL}/donations/delivery/${user.id}`);
+                const jobs = await res.json();
+                const active = jobs.filter(j => ['Claimed', 'Picked Up'].includes(j.status));
+
+                if (active.length === 0) {
+                    container.innerHTML = `<div style="text-align:center; padding:50px; opacity:0.5;">
+                        <i class="fa-solid fa-mug-hot" style="font-size:3rem; margin-bottom:20px;"></i>
+                        <p>No active jobs. Go to Requests to find work!</p>
+                    </div>`;
+                    if (mapInstance) {
+                        mapInstance.remove();
+                        mapInstance = null;
+                    }
+                    return;
+                }
+
+                // Show only the first active job for simplicity in this flow
+                const job = active[0];
+                const isPickedUp = job.status === 'Picked Up';
+
+                container.innerHTML = `
+                    <div class="task-card" style="border: 1px solid var(--delivery-primary);">
+                        <div class="task-header" style="background: rgba(16, 185, 129, 0.1);">
+                            <span class="task-badge bg-active">Ongoing</span>
+                            <span style="color:#fff; font-weight:bold;">#${job.id}</span>
+                        </div>
+                        <div class="task-body">
+                             <!-- MAP CONTAINER -->
+                             <div id="map" style="height: 250px; border-radius: 8px; margin-bottom: 25px; border:1px solid #334155;"></div>
+
+                             <div class="route-details">
+                                <div class="route-point">
+                                    <h4>FROM (Donor)</h4>
+                                    <p>${job.pickup_address}</p>
+                                    ${job.image_path ? `<img src="/${job.image_path}" style="width:100px; height:60px; object-fit:cover; border-radius:4px; margin-top:5px;">` : ''}
+                                </div>
+                                <div class="route-point drop" style="margin-top:15px;">
+                                    <h4>TO (NGO)</h4>
+                                    <p>NGO Location (Verified)</p> 
+                                </div>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                             <a href="tel:1234567890" class="btn-driver"><i class="fa-solid fa-phone"></i> Call</a>
+                             <button class="btn-driver" onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(job.pickup_address)}', '_blank')"><i class="fa-solid fa-diamond-turn-right"></i> Navigate</button>
+                        </div>
+                        ${!isPickedUp ?
+                        `<button class="btn-accept" style="border-radius:0 0 12px 12px;" onclick="verifyJob(${job.id})">VERIFY & PICKUP</button>` :
+                        `<button class="btn-accept" style="border-radius:0 0 12px 12px; background:#3b82f6; color:white;" onclick="completeJob(${job.id})">CONFIRM DELIVERY</button>`
+                    }
+                    </div>
+                `;
+
+                // Initialize Map after DOM is updated
+                setTimeout(() => {
+                    initMap(job.pickup_address);
+                }, 100);
+
+            } catch (e) { console.error(e); }
+        }
+
+        function initMap(address) {
+            // If map already exists, invalidateSize to ensure it renders correctly or remove it
+            if (mapInstance) {
+                mapInstance.remove();
+            }
+
+            // Ranchi Coordinates
+            const ranchiCoords = [23.3441, 85.3096];
+
+            // Random offset for demo (simulating donor location)
+            const latOffset = (Math.random() - 0.5) * 0.05;
+            const lngOffset = (Math.random() - 0.5) * 0.05;
+            const donorCoords = [ranchiCoords[0] + latOffset, ranchiCoords[1] + lngOffset];
+
+            mapInstance = L.map('map').setView(donorCoords, 13);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(mapInstance);
+
+            // Driver Marker
+            const driverIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/3063/3063823.png', // Truck icon
+                iconSize: [32, 32],
+                iconAnchor: [16, 16],
+            });
+            L.marker(ranchiCoords, { icon: driverIcon }).addTo(mapInstance)
+                .bindPopup('You are here (Hub)')
+                .openPopup();
+
+            // Donor Marker
+            const donorIcon = L.icon({
+                iconUrl: 'https://cdn-icons-png.flaticon.com/512/684/684908.png', // Location pin
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+            });
+            L.marker(donorCoords, { icon: donorIcon }).addTo(mapInstance)
+                .bindPopup('Pickup: ' + address);
+
+            // Draw route line (straight line for demo)
+            const latlngs = [ranchiCoords, donorCoords];
+            L.polyline(latlngs, { color: 'blue' }).addTo(mapInstance);
+
+            mapInstance.fitBounds(L.latLngBounds(latlngs).pad(0.2));
+        }
+
+        function verifyJob(id) {
+            if (confirm('Is the food verified against the image?')) {
+                updateStatus(id, 'Picked Up');
+            }
+        }
+
+        async function completeJob(id) {
+            const otp = prompt('Enter the 4-digit OTP provided by the NGO:');
+            if (otp) {
+                try {
+                    const res = await fetch(`${API_BASE_URL}/verify-delivery`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ donation_id: id, otp: otp })
+                    });
+                    const result = await res.json();
+
+                    if (res.ok) {
+                        alert(result.message);
+                        fetchActiveJob(); // Should clear the job
+                    } else {
+                        alert('Error: ' + result.message);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Verification failed.');
+                }
+            }
+        }
+
+        async function updateStatus(id, status) {
+            const res = await fetch(`${API_BASE_URL}/update-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status })
+            });
+            if (res.ok) fetchActiveJob();
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+    </script>
+</body>
+
+</html>

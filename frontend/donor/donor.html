@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard | ShareMeal</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2canvas for sharing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/style.css?v=2">
+    <link rel="stylesheet" href="/chat.css">
+    <style>
+        .dashboard-container {
+            /* Increased top padding to push content down below fixed navbar */
+            padding: 8rem 5% 2rem 5%;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: #666;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* --- Profile Card Styles --- */
+        .profile-card {
+            background: rgba(30, 41, 59, 0.7);
+            /* Dark Glass */
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .profile-layout {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .profile-left {
+            flex: 1;
+            min-width: 250px;
+            text-align: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding-right: 2rem;
+        }
+
+        .profile-right {
+            flex: 2;
+            min-width: 300px;
+        }
+
+        .avatar-upload {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 1.5rem;
+        }
+
+        .avatar-upload img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .upload-icon {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: var(--primary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 3px solid var(--surface-color);
+        }
+
+        .upload-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .role-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--primary-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Force inputs to match dark theme in case global doesn't catch them */
+        .form-group input,
+        .form-group textarea {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        /* Fix for file input text overlapping */
+        .form-group input[type="file"] {
+            padding: 10px;
+            line-height: 1.5;
+        }
+
+        /* Custom file selector button style for webkit */
+        .form-group input[type="file"]::file-selector-button {
+            margin-right: 15px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            color: #022c22;
+            font-weight: 600;
+        }
+
+        .form-group input:disabled {
+            background: rgba(255, 255, 255, 0.05) !important;
+            color: var(--text-secondary);
+            cursor: not-allowed;
+            border: none;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .donation-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-left: 5px solid var(--primary-color);
+            color: var(--text-primary);
+        }
+
+        .donation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-available {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--primary-color);
+        }
+
+        .status-claimed {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--accent-color);
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--primary-color);
+        }
+
+        .food-image-thumb {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .profile-left {
+                border-right: none;
+                padding-right: 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                padding-bottom: 2rem;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="/donor-home" class="logo">Share<span class="highlight">Meal</span></a>
+            <ul class="nav-links">
+                <li><a href="/donor-home">Home</a></li>
+                <li><a href="/donate" class="active">Donate Now</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1 id="welcomeMsg">Welcome, Donor</h1>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <!-- Notification Bell -->
+                <div style="position: relative; cursor: pointer;" onclick="toggleNotifications()">
+                    <i class="fa-solid fa-bell" style="font-size: 1.5rem; color: #94a3b8;"></i>
+                    <span id="notifBadge"
+                        style="position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">2</span>
+
+                    <!-- Dropdown -->
+                    <div id="notifDropdown"
+                        style="display: none; position: absolute; top: 35px; right: 0; width: 300px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; padding: 15px;">
+                        <h4
+                            style="color:white; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid #334155; font-size:1rem;">
+                            Notifications</h4>
+                        <ul style="list-style:none; padding:0; margin:0;">
+                            <li
+                                style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); color:#cbd5e1; font-size:0.9rem; display:flex; align-items:start; gap:10px;">
+                                <div style="background:rgba(59,130,246,0.1); padding:8px; border-radius:50%;"><i
+                                        class="fa-solid fa-truck-fast" style="color:#3b82f6;"></i></div>
+                                <div><strong>Rider Assigned</strong><br>Rider is on the way to pick up your donation.
+                                </div>
+                            </li>
+                            <li
+                                style="padding:10px 0; color:#cbd5e1; font-size:0.9rem; display:flex; align-items:start; gap:10px;">
+                                <div style="background:rgba(16,185,129,0.1); padding:8px; border-radius:50%;"><i
+                                        class="fa-solid fa-check-circle" style="color:#10b981;"></i></div>
+                                <div><strong>Claimed</strong><br>Your donation was claimed by WeCare NGO.</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Notifications Dropdown (Hidden) -->
+
+                <a href="/donate" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Donation</a>
+            </div>
+        </div>
+
+        <div class="dashboard-tabs">
+            <button class="tab-btn active" onclick="switchTab('my-donations')">My Donations</button>
+            <button class="tab-btn" onclick="switchTab('impact')">Impact & Stats</button>
+            <button class="tab-btn" onclick="switchTab('recent-feed')">Community Feed</button>
+            <button class="tab-btn" onclick="switchTab('profile')">My Profile</button>
+        </div>
+
+        <!-- My Donations Tab -->
+        <div id="my-donations" class="tab-content active">
+            <div id="myDonationsList" class="grid-cards">
+                <!-- Content loaded via JS -->
+                <p>Loading your donations...</p>
+            </div>
+        </div>
+
+        <!-- Impact & Stats Tab -->
+        <div id="impact" class="tab-content">
+            <!-- 1. Stats Overview -->
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="profile-card" style="text-align: center; padding: 1.5rem;">
+                    <i class="fa-solid fa-utensils"
+                        style="font-size: 2rem; color: var(--primary-color); margin-bottom: 10px;"></i>
+                    <h2 id="totalMeals" style="font-size: 2.5rem; margin: 0;">0</h2>
+                    <p style="color: #94a3b8;">Meals Donated</p>
+                </div>
+                <div class="profile-card" style="text-align: center; padding: 1.5rem;">
+                    <i class="fa-solid fa-users" style="font-size: 2rem; color: #3b82f6; margin-bottom: 10px;"></i>
+                    <h2 id="peopleFed" style="font-size: 2.5rem; margin: 0;">0</h2>
+                    <p style="color: #94a3b8;">People Fed</p>
+                </div>
+                <div class="profile-card" style="text-align: center; padding: 1.5rem;">
+                    <i class="fa-solid fa-leaf" style="font-size: 2rem; color: #10b981; margin-bottom: 10px;"></i>
+                    <h2 id="co2Saved" style="font-size: 2.5rem; margin: 0;">0kg</h2>
+                    <p style="color: #94a3b8;">CO2 Emissions Saved</p>
+                </div>
+            </div>
+
+            <!-- 2. Charts & Badges -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                <!-- Chart -->
+                <div class="profile-card">
+                    <h3 style="margin-bottom: 1.5rem;">Donation History</h3>
+                    <canvas id="impactChart" style="max-height: 300px;"></canvas>
+                </div>
+
+                <!-- Badges -->
+                <div class="profile-card">
+                    <h3 style="margin-bottom: 1.5rem;">Your Achievements</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" id="badgeContainer">
+                        <!-- Badges injected by JS -->
+                        <div style="display: flex; flex-direction: column; align-items: center; opacity: 0.5;">
+                            <i class="fa-solid fa-medal" style="font-size: 3rem; color: #cd7f32;"></i>
+                            <p style="margin-top: 5px; font-weight: bold;">Bronze</p>
+                            <small>5 Donations</small>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; opacity: 0.5;">
+                            <i class="fa-solid fa-medal" style="font-size: 3rem; color: #c0c0c0;"></i>
+                            <p style="margin-top: 5px; font-weight: bold;">Silver</p>
+                            <small>20 Donations</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 3. Social Impact & Certificate -->
+            <div class="profile-card" style="margin-top: 2rem;">
+                <h3 style="margin-bottom: 1.5rem;">Share Your Impact</h3>
+                <div style="display:flex; gap:30px; flex-wrap:wrap;">
+
+                    <!-- Preview Card -->
+                    <div id="impactCard"
+                        style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 30px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 400px; position:relative; overflow:hidden;">
+                        <!-- Deco Circles -->
+                        <div
+                            style="position:absolute; top:-20px; right:-20px; width:100px; height:100px; background:var(--primary-color); opacity:0.1; border-radius:50%;">
+                        </div>
+                        <div
+                            style="position:absolute; bottom:-30px; left:-30px; width:150px; height:150px; background:#3b82f6; opacity:0.1; border-radius:50%;">
+                        </div>
+
+                        <div style="text-align: center; position:relative; z-index:2;">
+                            <img id="cardAvatar" src="https://via.placeholder.com/80"
+                                style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary-color); margin-bottom: 15px; object-fit:cover;">
+                            <h3 id="cardName" style="color: white; margin: 0; font-size: 1.4rem;">Donor Name</h3>
+                            <p style="color: var(--primary-color); font-weight: 600; margin-bottom: 20px;">Food Hero</p>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+                                    <h2 id="cardMeals" style="margin: 0; color: white;">0</h2>
+                                    <small style="color: #94a3b8;">Meals Saved</small>
+                                </div>
+                                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
+                                    <h2 id="cardCO2" style="margin: 0; color: #10b981;">0kg</h2>
+                                    <small style="color: #94a3b8;">CO2 Reduced</small>
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                                <p style="color: #cbd5e1; font-size: 0.9rem; margin:0;">I'm making a difference with
+                                    <span style="color:var(--primary-color); font-weight:bold;">ShareMeal</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:15px;">
+                        <p style="color:var(--text-secondary);">Show the world your contribution to a hunger-free
+                            planet!</p>
+
+                        <button onclick="shareImpact('whatsapp')" class="btn"
+                            style="background: #25D366; color: white; width:100%; text-align:left; padding: 12px 20px;">
+                            <i class="fa-brands fa-whatsapp" style="margin-right:10px; font-size:1.2rem;"></i> Share on
+                            WhatsApp
+                        </button>
+
+                        <button onclick="shareImpact('twitter')" class="btn"
+                            style="background: #1DA1F2; color: white; width:100%; text-align:left; padding: 12px 20px;">
+                            <i class="fa-brands fa-twitter" style="margin-right:10px; font-size:1.2rem;"></i> Share on
+                            Twitter
+                        </button>
+
+                        <button onclick="downloadCertificate()" class="btn btn-primary"
+                            style="width:100%; text-align:left; padding: 12px 20px;">
+                            <i class="fa-solid fa-file-pdf" style="margin-right:10px; font-size:1.2rem;"></i> Download
+                            Certificate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Feed Tab -->
+        <div id="recent-feed" class="tab-content">
+            <div id="recentDonationsList" class="grid-cards">
+                <!-- Content loaded via JS -->
+                <p>Loading community feed...</p>
+            </div>
+        </div>
+
+        <!-- Edit Donation Modal -->
+        <div id="editModal" class="modal-overlay"
+            style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
+            <div class="modal-content"
+                style="background:#1e293b; padding:2rem; border-radius:12px; border:1px solid #334155; width:90%; max-width:500px; color:white;">
+                <h3 style="margin-bottom:1.5rem; text-align:center;">Edit Donation</h3>
+                <form id="editForm">
+                    <input type="hidden" id="editId">
+                    <div class="form-group">
+                        <label>Food Type</label>
+                        <input type="text" id="editFoodType" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="text" id="editQuantity" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" id="editAddress" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Diet Type</label>
+                        <select id="editDietType"
+                            style="width:100%; padding:10px; border-radius:8px; border:1px solid #334155; background:#0f172a; color:white;">
+                            <option value="Veg">Veg</option>
+                            <option value="Non-Veg">Non-Veg</option>
+                            <option value="Raw">Raw Ingredients</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Instructions</label>
+                        <textarea id="editInstructions" rows="3"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1;">Save Changes</button>
+                        <button type="button" class="btn" style="flex: 1; background: #334155; color: white;"
+                            onclick="closeEditModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Profile Tab (Redesigned) -->
+        <div id="profile" class="tab-content">
+            <div class="profile-card">
+                <form id="profileForm" enctype="multipart/form-data">
+                    <div class="profile-layout">
+                        <!-- Left Column: Avatar & Bio -->
+                        <div class="profile-left">
+                            <div class="avatar-upload">
+                                <img id="avatarPreview" src="https://via.placeholder.com/150" alt="Profile">
+                                <label for="profilePicInput" class="upload-icon">
+                                    <i class="fa-solid fa-camera"></i>
+                                </label>
+                                <input type="file" id="profilePicInput" name="profile_pic" accept="image/*" hidden>
+                            </div>
+                            <h3 id="profileNameDisplay">User Name</h3>
+                            <p class="role-badge">Donor</p>
+                        </div>
+
+                        <!-- Right Column: Details -->
+                        <div class="profile-right">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Full Name / Organization</label>
+                                    <input type="text" id="profileName" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email Address</label>
+                                    <input type="email" id="profileEmail" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="tel" id="profilePhone" name="phone" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Address / Location</label>
+                                    <input type="text" id="profileAddress" name="address"
+                                        placeholder="City, Area or Full Address">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Bio / About (Optional)</label>
+                                    <textarea id="profileBio" name="bio" rows="3"
+                                        placeholder="Tell us about yourself or your organization..."></textarea>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="margin-top: 20px;">
+                                <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="chat-modal-overlay">
+        <div class="chat-box">
+            <div class="chat-header">
+                <div class="chat-info">
+                    <div class="chat-avatar-placeholder" id="chatAvatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="chat-text">
+                        <h3 id="chatTitleText">Chat</h3>
+                        <p id="chatSubtitle"><span class="status-dot"></span> Online</p>
+                    </div>
+                </div>
+                <button class="chat-close" onclick="closeChat()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages injected here -->
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+                <button class="chat-send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+        const userStr = localStorage.getItem('user');
+
+        if (!userStr) {
+            window.location.href = '/login';
+        }
+
+        const user = JSON.parse(userStr);
+        document.getElementById('welcomeMsg').innerText = `Welcome, ${user.name}`;
+
+        // Logout
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        // Switch Tabs
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Fetch My Donations
+        async function fetchMyDonations() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/donations/user/${user.id}`);
+                const donations = await res.json();
+                renderDonations(donations, 'myDonationsList', true); // Pass true for Editable
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Fetch Recent Feed (All Donations)
+        async function fetchRecentFeed() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/donations`);
+                const donations = await res.json();
+                renderDonations(donations, 'recentDonationsList', false);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Render Cards
+        function renderDonations(donations, containerId, isEditable = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (donations.length === 0) {
+                container.innerHTML = '<p>No donations found.</p>';
+                return;
+            }
+
+            donations.forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'donation-card';
+
+                let imageHtml = '';
+                if (d.image_path) {
+                    imageHtml = `<img src="${d.image_path}" class="food-image-thumb" alt="Food Image">`;
+                }
+
+                let actionButtons = '';
+                if (isEditable) {
+                    actionButtons = `
+                        <div style="display: flex; gap: 15px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                            <button onclick="openEditModal(${JSON.stringify(d).replace(/"/g, '&quot;')})" 
+                                style="background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 0.9rem; font-weight:600;">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                            <button onclick="deleteDonation(${d.id})" 
+                                style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.9rem; font-weight:600;">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="donation-header">
+                        <span>${d.food_type} (${d.diet_type || 'N/A'})</span>
+                        <span class="status-badge status-${d.status.toLowerCase()}">${d.status}</span>
+                    </div>
+                    <p><strong>Qty:</strong> ${d.quantity}</p>
+                    <p><strong>Loc:</strong> ${d.pickup_address}</p>
+                    <p><small>${d.timestamp}</small></p>
+                    ${imageHtml}
+                    ${actionButtons}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- Edit / Delete Logic ---
+
+        async function deleteDonation(id) {
+            if (!confirm('Are you sure you want to delete this donation?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/donate/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    fetchMyDonations(); // Refresh list
+                    fetchRecentFeed(); // Refresh feed too
+                } else {
+                    alert('Error deleting');
+                }
+            } catch (err) { console.error(err); }
+        }
+
+        function openEditModal(donation) {
+            document.getElementById('editId').value = donation.id;
+            document.getElementById('editFoodType').value = donation.food_type;
+            document.getElementById('editQuantity').value = donation.quantity;
+            document.getElementById('editAddress').value = donation.pickup_address;
+            document.getElementById('editInstructions').value = donation.instructions || '';
+            document.getElementById('editDietType').value = donation.diet_type || 'Veg';
+
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const data = {
+                foodType: document.getElementById('editFoodType').value,
+                quantity: document.getElementById('editQuantity').value,
+                address: document.getElementById('editAddress').value,
+                instructions: document.getElementById('editInstructions').value,
+                dietType: document.getElementById('editDietType').value
+            };
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/donate/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if (result.success) {
+                    closeEditModal();
+                    alert('Donation updated successfully!');
+                    fetchMyDonations();
+                    fetchRecentFeed();
+                } else {
+                    alert('Update failed');
+                }
+            } catch (err) { console.error(err); }
+        });
+
+        // --- NEW PROFILE LOGIC ---
+        // Preview Image Logic
+        document.getElementById('profilePicInput').addEventListener('change', function (e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('avatarPreview').src = e.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Fetch Profile
+        async function fetchProfile() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/user/${user.id}`);
+                const data = await res.json();
+                if (data.error) return;
+
+                // Populate Fields
+                document.getElementById('profileName').value = data.name || '';
+                document.getElementById('profileEmail').value = data.email || '';
+                document.getElementById('profilePhone').value = data.phone || '';
+                document.getElementById('profileAddress').value = data.address || '';
+                document.getElementById('profileBio').value = data.bio || '';
+
+                // Update Sidebar Name
+                document.getElementById('profileNameDisplay').innerText = data.name || 'User';
+
+                // Update Avatar if exists
+                if (data.profile_pic) {
+                    document.getElementById('avatarPreview').src = data.profile_pic;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Update Profile
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            formData.append('id', user.id); // Add User ID
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/user/update`, {
+                    method: 'POST',
+                    body: formData // Send as FormData (multipart)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert('Profile Updated Successfully!');
+
+                    // Update local storage name if changed
+                    const newName = formData.get('name');
+                    user.name = newName;
+                    localStorage.setItem('user', JSON.stringify(user));
+
+                    document.getElementById('welcomeMsg').innerText = `Welcome, ${newName}`;
+                    document.getElementById('profileNameDisplay').innerText = newName;
+                } else {
+                    alert('Error updating profile: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to connect to server');
+            }
+        });
+
+
+        // Initialize
+        // fetchMyDonations();
+        // fetchRecentFeed();
+        // fetchProfile();
+
+        // --- IMPACT & ANALYTICS LOGIC ---
+
+        // Mock CO2 and People Fed calculation based on quantity
+        // Assume 1 serving = 0.5kg CO2 saved (very rough est) and feeds 1 person
+        function calculateStats(donations) {
+            let totalQty = 0;
+            donations.forEach(d => {
+                totalQty += parseInt(d.quantity) || 0;
+            });
+
+            const co2 = (totalQty * 0.5).toFixed(1);
+
+            // Animation for Numbers
+            animateValue("totalMeals", 0, totalQty, 1500);
+            animateValue("peopleFed", 0, totalQty, 1500);
+            animateValue("co2Saved", 0, co2, 1500);
+
+            updateImpactCard(user.name, totalQty, co2);
+            renderChart(donations);
+            updateBadges(donations.length);
+        }
+
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start) + (id === 'co2Saved' ? 'kg' : '');
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Update Card Data
+        function updateImpactCard(name, meals, co2) {
+            document.getElementById('cardName').innerText = name;
+            document.getElementById('cardMeals').innerText = meals;
+            document.getElementById('cardCO2').innerText = `${co2}kg`;
+
+            // Try to get avatar
+            const avatar = document.getElementById('avatarPreview').src;
+            if (avatar) document.getElementById('cardAvatar').src = avatar;
+        }
+
+        async function shareImpact(platform) {
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+            btn.disabled = true;
+
+            const meals = document.getElementById('totalMeals').innerText;
+            const co2 = document.getElementById('co2Saved').innerText;
+            const cardElement = document.getElementById('impactCard');
+
+            // Advertising URL
+            const websiteUrl = window.location.origin;
+
+            const shareText = `I just saved ${meals} meals and reduced ${co2} of CO2 emissions using ShareMeal! 🌍\n\nJoin me in fighting hunger here: ${websiteUrl}\n\n#ShareMeal #FoodWasteHero`;
+
+            try {
+                // 1. Capture Impact Card as Image
+                const canvas = await html2canvas(cardElement, {
+                    scale: 2,
+                    backgroundColor: null,
+                    logging: false
+                });
+
+                // 2. Process Blob
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], 'sharemeal-impact.png', { type: 'image/png' });
+
+                    // 3. Try Native Mobile Share (Supports Image)
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                title: 'My ShareMeal Impact',
+                                text: shareText,
+                                files: [file]
+                            });
+                            // Reset
+                            btn.innerHTML = originalHtml;
+                            btn.disabled = false;
+                            return;
+                        } catch (err) {
+                            // User cancelled or error
+                            if (err.name !== 'AbortError') console.error("Share failed", err);
+                        }
+                    }
+
+                    // 4. Desktop / Fallback (Download Image + Text Link)
+                    // Since we can't push image to WhatsApp Web directly, we let user download it.
+
+                    const link = document.createElement('a');
+                    link.download = 'sharemeal-impact.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+
+                    alert("Impact Card downloaded! Attach it to your message on the next screen.");
+
+                    const encodedText = encodeURIComponent(shareText);
+                    let url = '';
+
+                    if (platform === 'whatsapp') {
+                        url = `https://wa.me/?text=${encodedText}`;
+                    } else if (platform === 'twitter') {
+                        url = `https://twitter.com/intent/tweet?text=${encodedText}`;
+                    }
+
+                    if (url) window.open(url, '_blank');
+
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+
+                }, 'image/png');
+
+            } catch (err) {
+                console.error("Impact Gen Error:", err);
+
+                // Absolute Fail-safe: Just Text
+                const encodedText = encodeURIComponent(shareText);
+                window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        }
+
+        function downloadCertificate() {
+            const name = user.name;
+            const meals = document.getElementById('totalMeals').innerText;
+            const date = new Date().toLocaleDateString();
+
+            // Custom Template Logic
+            const bgImage = `http://localhost:3000/uploads/certificate_template.png?t=${new Date().getTime()}`;
+
+            const certContent = `
+                <div style="width:800px; height:600px; position:relative; font-family:'Helvetica', sans-serif; text-align:center; box-sizing:border-box; color: #3e3e3e;">
+                    <!-- Background Image -->
+                    <img src="${bgImage}" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:-1;">
+                    
+                    <!-- Name (Moved down to 48%) -->
+                    <div style="position:absolute; top:48%; left:50%; transform:translate(-50%, -50%); width:80%; text-align:center;">
+                        <h1 style="font-size:3rem; color:#4a0404; font-family:'Times New Roman', serif; margin:0; text-transform:capitalize;">${name}</h1>
+                    </div>
+
+                    <!-- Meals Count (Moved Down to 63.5%) -->
+                    <div style="position:absolute; top:63.5%; left:58%; transform:translateX(-50%); width:200px; text-align:center;">
+                         <span style="font-size:1.1rem; font-weight:bold; color:#000; font-family:sans-serif;">${meals} Meals</span>
+                    </div>
+
+                    <!-- Left: Date (Moved Down to 18%) -->
+                    <div style="position:absolute; bottom:18%; left:18%; width:150px; text-align:center;">
+                        <p style="font-size:1.1rem; font-weight:bold; margin:0; color:#000;">${date}</p>
+                    </div>
+
+                    <!-- Right: Signature (Moved Right to 18%) -->
+                    <div style="position:absolute; bottom:20%; right:18%; width:150px; text-align:center;">
+                         <div style="font-family:'Cursive', serif; font-size:1.5rem; color:#4a0404; font-weight:bold; transform:rotate(-5deg);">ShareMeal</div>
+                    </div>
+                </div>
+            `;
+
+            const win = window.open('', '', 'width=900,height=700');
+            win.document.write('<html><head><title>Certificate</title></head><body style="display:flex; justify-content:center; align-items:center; height:100vh; margin:0;">');
+            win.document.write(certContent);
+            win.document.write('</body></html>');
+            win.document.close();
+
+            setTimeout(() => {
+                win.print();
+            }, 500);
+        }
+
+
+        function renderChart(donations) {
+            const ctx = document.getElementById('impactChart').getContext('2d');
+
+            // Group by Month (Simple impl)
+            const today = new Date();
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            const dataPoints = [5, 12, 18, 10, 24, donations.length]; // Mock data progression + actual total
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Meals Donated',
+                        data: dataPoints,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { grid: { color: 'rgba(255,255,255,0.1)' } }
+                    }
+                }
+            });
+        }
+
+        function updateBadges(count) {
+            const container = document.getElementById('badgeContainer');
+            container.innerHTML = '';
+
+            const badges = [
+                { limit: 1, name: 'First Step', icon: 'fa-hand-holding-heart', color: '#60a5fa' },
+                { limit: 5, name: 'Bronze', icon: 'fa-medal', color: '#cd7f32' },
+                { limit: 20, name: 'Silver', icon: 'fa-medal', color: '#c0c0c0' },
+                { limit: 50, name: 'Gold', icon: 'fa-crown', color: '#ffd700' }
+            ];
+
+            badges.forEach(b => {
+                const unlocked = count >= b.limit;
+                const opacity = unlocked ? '1' : '0.3';
+                const brightness = unlocked ? 'brightness(1.2)' : 'grayscale(1)';
+
+                container.innerHTML += `
+                    <div style="display: flex; flex-direction: column; align-items: center; opacity: ${opacity}; filter: ${brightness}; transition: all 0.3s;">
+                        <i class="fa-solid ${b.icon}" style="font-size: 3rem; color: ${b.color}; margin-bottom: 5px;"></i>
+                        <p style="font-weight: bold; color:white;">${b.name}</p>
+                        <small style="color:#94a3b8;">${b.limit}+ Donations</small>
+                    </div>
+                `;
+            });
+        }
+
+        // --- OVERRIDE FETCH FOR STATS ---
+        const originalFetchMyDonations = fetchMyDonations;
+        fetchMyDonations = async function () {
+            try {
+                const res = await fetch(`${API_BASE_URL}/donations/user/${user.id}`);
+                const donations = await res.json();
+                renderDonations(donations, 'myDonationsList', true);
+
+                // NEW: Calculate stats
+                calculateStats(donations);
+            } catch (err) { console.error(err); }
+        }
+
+        // --- UPDATED RENDER FUNCTION (Chat & Timeline) ---
+        function renderDonations(donations, containerId, isEditable = false) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            if (donations.length === 0) {
+                container.innerHTML = '<p>No donations found.</p>';
+                return;
+            }
+
+            donations.forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'donation-card';
+
+                // Timeline Status Logic
+                let width = '10%';
+                if (d.status === 'Claimed') width = '50%';
+                if (d.status === 'Picked Up') width = '75%';
+                if (d.status === 'Completed' || d.status === 'Delivered') width = '100%';
+
+                const timelineHtml = `
+                    <div style="margin: 15px 0;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:#94a3b8; margin-bottom:5px;">
+                            <span>Posted</span>
+                            <span>Claimed</span>
+                            <span>Delivered</span>
+                        </div>
+                        <div style="width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:10px; overflow:hidden;">
+                            <div style="width:${width}; height:100%; background:var(--primary-color); transition:width 0.5s;"></div>
+                        </div>
+                    </div>
+                `;
+
+                let imageHtml = '';
+                if (d.image_path) imageHtml = `<img src="${d.image_path}" class="food-image-thumb" alt="Food Image">`;
+
+                let actionButtons = '';
+                if (isEditable) {
+                    actionButtons = `
+                        <div style="display: flex; gap: 15px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
+                            <button onclick="openEditModal(${JSON.stringify(d).replace(/"/g, '&quot;')})" 
+                                style="background: none; border: none; color: #3b82f6; cursor: pointer; font-size: 0.9rem; font-weight:600;">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                            <button onclick="deleteDonation(${d.id})" 
+                                style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.9rem; font-weight:600;">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
+                            <!-- Chat Button -->
+                            <button onclick="openChat(${JSON.stringify(d).replace(/"/g, '&quot;')})" 
+                                style="background: none; border: none; color: #10b981; cursor: pointer; font-size: 0.9rem; font-weight:600; margin-left:auto;">
+                                <i class="fa-regular fa-comments"></i> Chat
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Expiry Badge
+                const expiryHtml = d.expiry_datetime && d.status === 'Available'
+                    ? `<div class="expiry-cnt" data-expiry="${d.expiry_datetime}">Calculating...</div>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="donation-header" style="flex-direction: column; align-items: flex-start;">
+                        <span style="font-size: 1.1rem; color: white;">${d.food_name || d.instructions || d.food_type}</span>
+                        <span style="font-size: 0.85rem; color: ${d.diet_type === 'Veg' ? '#4ade80' : '#f87171'}; margin-top: 2px;">
+                            <i class="fa-solid fa-circle" style="font-size: 6px; vertical-align: middle;"></i> ${d.diet_type || 'N/A'}
+                        </span>
+                        <span class="status-badge status-${d.status.toLowerCase()}" style="position: absolute; right: 20px; top: 20px;">${d.status}</span>
+                    </div>
+                    ${expiryHtml}
+                    <p><strong>Qty:</strong> ${d.quantity}</p>
+                    <p><strong>Loc:</strong> ${d.pickup_address}</p>
+                    
+                    ${timelineHtml}
+                    
+                    <p><small>${d.timestamp}</small></p>
+                    ${imageHtml}
+                    ${actionButtons}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // --- Live Expiry Logic ---
+        setInterval(() => {
+            document.querySelectorAll('.expiry-cnt').forEach(el => {
+                const expiryStr = el.getAttribute('data-expiry');
+                if (!expiryStr) return;
+
+                const now = new Date();
+                const expiry = new Date(expiryStr);
+                const diffMs = expiry - now;
+
+                if (diffMs <= 0) {
+                    el.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Expired';
+                    el.className = 'expiry-cnt expired';
+                    return;
+                }
+
+                const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+                const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+                el.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Expires in: ${hrs}h ${mins}m ${secs}s`;
+
+                // Priority Colors
+                el.classList.remove('urgent', 'warning', 'safe');
+                if (hrs < 2) el.classList.add('urgent');
+                else if (hrs < 6) el.classList.add('warning');
+                else el.classList.add('safe');
+            });
+        }, 1000);
+
+        // CSS for Timers
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .expiry-cnt {
+                font-size: 0.8rem;
+                font-weight: 600;
+                padding: 4px 8px;
+                border-radius: 4px;
+                margin: 5px 0;
+                display: block; 
+                text-align: left;
+                background: rgba(255,255,255,0.05);
+                color: #94a3b8;
+            }
+            .expiry-cnt.safe { color: #34d399; }
+            .expiry-cnt.warning { color: #fbbf24; }
+            .expiry-cnt.urgent { color: #f87171; animation: pulse 2s infinite; }
+            .expiry-cnt.expired { color: #94a3b8; text-decoration: line-through; }
+        `;
+        document.head.appendChild(style);
+
+        // --- CHAT LOGIC ---
+        let currentChatDonationId = null;
+        let currentChatReceiverId = null;
+        let chatPollInterval = null;
+
+        function openChat(donation) {
+            // Fetch fresh details (Single Source of Truth)
+            currentChatDonationId = donation.id;
+            currentChatReceiverId = null; // Reset
+
+            document.getElementById('chatTitleText').innerText = `Chat: ${donation.food_type}`;
+            document.getElementById('chatSubtitle').innerText = `Loading...`;
+            document.getElementById('chatModal').style.display = 'flex';
+
+            // Initial load
+            reloadChatDetails();
+
+            // Start polling
+            if (chatPollInterval) clearInterval(chatPollInterval);
+            chatPollInterval = setInterval(reloadChatDetails, 3000);
+        }
+
+        async function reloadChatDetails() {
+            if (!currentChatDonationId) return;
+
+            try {
+                // 1. Fetch messages
+                const resMsg = await fetch(`${API_BASE_URL}/chat/${currentChatDonationId}`);
+                const messages = await resMsg.json();
+                renderMessages(messages);
+
+                // 2. Fetch fresh CLAIMER info if we don't know it yet
+                if (!currentChatReceiverId) {
+                    // In a real app we would have GET /api/donations/:id for efficiency
+                    const resD = await fetch(`${API_BASE_URL}/donations`);
+                    const allDonations = await resD.json();
+                    const freshData = allDonations.find(d => d.id == currentChatDonationId);
+
+                    if (freshData) {
+                        currentChatReceiverId = freshData.claimed_by;
+                        document.getElementById('chatSubtitle').innerText = `#${freshData.id} • ${freshData.status}`;
+                    }
+                }
+
+            } catch (e) { console.error(e); }
+        }
+
+        function closeChat() {
+            document.getElementById('chatModal').style.display = 'none';
+            clearInterval(chatPollInterval);
+            currentChatDonationId = null;
+        }
+
+        function renderMessages(messages) {
+            const container = document.getElementById('chatMessages');
+
+            // Basic diffing to avoid full redraw if count matches (preserves scroll sometimes)
+            // But we want to ensure new messages appear. 
+            // For simplicity in this vanilla JS, we'll redraw but attempt to scroll only if at bottom?
+            // Just redraw for now to be safe.
+
+            container.innerHTML = '';
+            messages.forEach(msg => {
+                const isMe = msg.sender_id == user.id;
+                const div = document.createElement('div');
+                div.className = `message ${isMe ? 'message-sent' : 'message-received'}`;
+
+                // Name label for others
+                const senderLabel = !isMe ? `<small style="display:block; font-size:0.7rem; color:#94a3b8; margin-bottom:2px;">${msg.sender_name || 'User'}</small>` : '';
+
+                div.innerHTML = `
+                    ${senderLabel}
+                    ${msg.message}
+                    <span class="message-time">${msg.timestamp.split(' ')[1].slice(0, 5)}</span>
+                `;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Allow sending even if receiver is unknown (stored as null in DB)
+            try {
+                const res = await fetch(`${API_BASE_URL}/chat/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        donation_id: currentChatDonationId,
+                        sender_id: user.id,
+                        receiver_id: currentChatReceiverId,
+                        message: text
+                    })
+                });
+                if (res.ok) {
+                    input.value = '';
+                    reloadChatDetails();
+                } else {
+                    alert('Error sending message');
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // Enter key to send
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notifDropdown');
+            const badge = document.getElementById('notifBadge');
+
+            if (dropdown.style.display === 'none' || dropdown.style.display === '') {
+                dropdown.style.display = 'block';
+                // Clear badge on open
+                if (badge) badge.style.display = 'none';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function (event) {
+            const bell = event.target.closest('.fa-bell') || event.target.closest('[onclick="toggleNotifications()"]');
+            const dropdown = document.getElementById('notifDropdown');
+            if (!bell && dropdown && dropdown.style.display === 'block') {
+                dropdown.style.display = 'none'; // Fixed JS syntax
+            }
+        }
+        // Initialize (Moved here)
+        fetchMyDonations();
+        fetchRecentFeed();
+        fetchStats();
+
+        async function fetchStats() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/user/stats/${user.id}`);
+                if (res.ok) {
+                    const stats = await res.json();
+                    document.getElementById('totalMeals').innerText = stats.meals_donated;
+                    document.getElementById('peopleFed').innerText = stats.people_fed;
+                    document.getElementById('co2Saved').innerText = stats.co2_saved;
+
+                    // Update the Shareable Card as well
+                    updateImpactCard(user.name, stats.meals_donated, stats.co2_saved);
+
+                    // Safety check: Explicitly try to load avatar into card if fetchProfile has run
+                    setTimeout(() => {
+                        const avatar = document.getElementById('avatarPreview').src;
+                        if (avatar && avatar.indexOf('placeholder') === -1) {
+                            document.getElementById('cardAvatar').src = avatar;
+                        }
+                    }, 1000);
+
+                    // Award badges logic (Example)
+                    const badgeContainer = document.getElementById('badgeContainer');
+                    // Reset if needed or check if empty. 
+                    // For now, simple dynamic check
+                    if (stats.meals_donated >= 5) {
+                        // Ensure elements exist or are un-dimmed
+                    }
+                }
+            } catch (e) { console.error('Error fetching stats:', e); }
+        }
+
+        // --- Notifications ---
+        async function pollNotifications() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/notifications/${user.id}`);
+                const data = await res.json();
+
+                const badge = document.getElementById('notifBadge');
+                if (data.unread_count > 0) {
+                    badge.innerText = data.unread_count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        setInterval(pollNotifications, 5000);
+        pollNotifications();
+        fetchProfile();
+    </script>
+</body>
+
+</html>

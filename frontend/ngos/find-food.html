@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Food | ShareMeal</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/style.css?v=2">
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="/find-food" class="logo">Share<span class="highlight">Meal</span></a>
+            <ul class="nav-links">
+                <li><a href="/find-food" class="active">Dashboard</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="dashboard-container" style="padding-top: 100px;">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <h1 id="welcomeMsg">Welcome, NGO Partner</h1>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <!-- Notification (Static for now) -->
+                <div style="position: relative; cursor: pointer;">
+                    <i class="fa-solid fa-bell" style="font-size: 1.5rem; color: #94a3b8;"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="dashboard-tabs">
+            <button class="tab-btn active" onclick="switchTab('feed')">Find Food</button>
+            <button class="tab-btn" onclick="switchTab('my-claims')">My Collections</button>
+            <button class="tab-btn" onclick="switchTab('impact')">Impact</button>
+            <button class="tab-btn" onclick="switchTab('profile')">Profile</button>
+        </div>
+
+        <!-- 1. Feed Tab -->
+        <div id="feed" class="tab-content active">
+            <div class="feed-filters" style="margin-bottom: 20px;">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="human">For Humans 🥘</button>
+                <button class="filter-btn" data-filter="animal">For Animals 🐾</button>
+                <button class="filter-btn" data-filter="compost">Compost 🌿</button>
+                <button class="filter-btn" data-filter="landfill">Landfill ⚠️</button>
+            </div>
+
+            <div id="donationGrid" class="donations-grid">
+                <div class="loading-state">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    <p>Scanning for nearby donations...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. My Claims Tab -->
+        <div id="my-claims" class="tab-content">
+            <h2 style="color:white; margin-bottom: 20px;">Your Claimed Donations</h2>
+            <div id="myClaimsGrid" class="donations-grid">
+                <p>Loading your history...</p>
+            </div>
+        </div>
+
+        <!-- 3. Impact Tab -->
+        <div id="impact" class="tab-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                <div class="profile-card" style="text-align: center; padding: 2rem;">
+                    <i class="fa-solid fa-box-open"
+                        style="font-size: 2.5rem; color: var(--primary-color); margin-bottom: 15px;"></i>
+                    <h2 id="totalClaimed" style="font-size: 2.5rem; margin: 0;">0</h2>
+                    <p style="color: #94a3b8;">Donations Collected</p>
+                </div>
+                <div class="profile-card" style="text-align: center; padding: 2rem;">
+                    <i class="fa-solid fa-users" style="font-size: 2.5rem; color: #3b82f6; margin-bottom: 15px;"></i>
+                    <h2 id="peopleServed" style="font-size: 2.5rem; margin: 0;">0</h2>
+                    <p style="color: #94a3b8;">People Served</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Profile Tab -->
+        <div id="profile" class="tab-content">
+            <div class="profile-card">
+                <form id="profileForm">
+                    <div class="profile-layout">
+                        <div class="profile-left">
+                            <div class="avatar-upload">
+                                <img id="avatarPreview" src="https://via.placeholder.com/150" alt="Profile">
+                                <label for="profilePicInput" class="upload-icon"><i
+                                        class="fa-solid fa-camera"></i></label>
+                                <input type="file" id="profilePicInput" name="profile_pic" accept="image/*" hidden>
+                            </div>
+                            <h3 id="profileNameDisplay">NGO Name</h3>
+                            <p class="role-badge"
+                                style="background: rgba(245, 158, 11, 0.2); color: var(--accent-color);">NGO Partner</p>
+                        </div>
+                        <div class="profile-right">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Organization Name</label>
+                                    <input type="text" id="profileName" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="profileEmail" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone</label>
+                                    <input type="tel" id="profilePhone" name="phone" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Office Address</label>
+                                    <input type="text" id="profileAddress" name="address">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label>Mission / Bio</label>
+                                    <textarea id="profileBio" name="bio" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="margin-top:20px;">Save Profile</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Chat Widget -->
+    <link rel="stylesheet" href="/chat.css">
+    <div id="chatModal" class="chat-modal-overlay">
+        <div class="chat-box">
+            <div class="chat-header">
+                <div class="chat-info">
+                    <div class="chat-avatar-placeholder" id="chatAvatar">
+                        <i class="fa-solid fa-hand-holding-heart"></i>
+                    </div>
+                    <div class="chat-text">
+                        <h3 id="chatTitleText">Chat</h3>
+                        <p id="chatSubtitle"><span class="status-dot"></span> Online</p>
+                    </div>
+                </div>
+                <button class="chat-close" onclick="closeChat()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages injected here -->
+            </div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+                <button class="chat-send-btn" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Claim Modal -->
+    <div id="claimModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeClaimModal()">&times;</span>
+            <h2>Confirm Claim</h2>
+            <p>Please confirm your details before claiming this donation.</p>
+            <form id="claimForm">
+                <input type="hidden" id="claimDonationId">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="claimName" required>
+                </div>
+                <div class="form-group">
+                    <label>NGO Name</label>
+                    <input type="text" id="claimNgoName" required>
+                </div>
+                <div class="form-group">
+                    <label>Contact Number</label>
+                    <input type="tel" id="claimPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Delivery Address</label>
+                    <input type="text" id="claimAddress" required>
+                </div>
+
+
+                <div class="form-group"
+                    style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); margin-top: 20px;">
+                    <label
+                        style="display: block; margin-bottom: 10px; color: var(--primary-color); font-weight: bold; font-size: 1rem;"><i
+                            class="fa-solid fa-truck-fast"></i> Delivery Options</label>
+
+                    <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <input type="checkbox" id="claimDeliveryReq" checked
+                            style="width: 20px; height: 20px; accent-color: var(--primary-color); margin-top: 3px;">
+                        <div>
+                            <label for="claimDeliveryReq" style="margin: 0; color: white; font-weight: 600;">Request a
+                                Delivery Partner</label>
+                            <small style="display: block; color: #94a3b8; margin-top: 5px;">
+                                Check this box if you need a volunteer driver to pick this up for you.
+                                <br>Uncheck if you will pick it up yourself.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary"
+                    style="width:100%; margin-top:20px; padding: 12px; font-size: 1.1rem;">
+                    Confirm & Claim Donation
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Overrides for NGO Logic -->
+    <script src="/app.js?v=3"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:3000/api';
+        const userStr = localStorage.getItem('user');
+
+        if (!userStr) {
+            window.location.href = '/login';
+        }
+
+        const user = JSON.parse(userStr);
+        // Only allow NGOs
+        if (user.role && user.role.toLowerCase() !== 'ngo') {
+            alert('Access Denied. NGO Account Required.');
+            window.location.href = '/login';
+        }
+
+        document.getElementById('welcomeMsg').innerText = `Welcome, ${user.name}`;
+
+        // --- Claim Modal Logic ---
+        const claimModal = document.getElementById('claimModal');
+
+        // Override global updateStatus to intercept checks
+        window.updateStatus = function (donationId, newStatus) {
+            if (newStatus === 'Claimed') {
+                openClaimModal(donationId);
+            } else {
+                // For other statuses or if logic existed (unlikely for NGO view on Feed)
+                // We fallback to original logic or just ignore. 
+                // Only 'Claimed' is relevant for NGO on feed.
+            }
+        };
+
+        function openClaimModal(donationId) {
+            document.getElementById('claimDonationId').value = donationId;
+
+            // Pre-fill
+            document.getElementById('claimName').value = user.name || '';
+            document.getElementById('claimNgoName').value = user.name || ''; // Assuming User Name is NGO Name usually
+            document.getElementById('claimPhone').value = user.phone || '';
+            document.getElementById('claimAddress').value = user.address || '';
+
+            claimModal.style.display = 'block';
+        }
+
+        function closeClaimModal() {
+            claimModal.style.display = 'none';
+        }
+
+        window.onclick = function (event) {
+            if (event.target == claimModal) {
+                closeClaimModal();
+            }
+        }
+
+        // Handle Claim Submit
+        document.getElementById('claimForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const donationId = document.getElementById('claimDonationId').value;
+            // We could capture these values and update profile if we wanted:
+            const updatedPhone = document.getElementById('claimPhone').value;
+            const updatedAddress = document.getElementById('claimAddress').value;
+            // Ideally we should sync this back to profile? Let's just proceed to claim for now.
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/update-status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: donationId,
+                        status: 'Claimed',
+                        ngo_id: user.id,
+                        delivery_req: document.getElementById('claimDeliveryReq').checked
+                    })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Donation Claimed Successfully! Please coordinate pickup.');
+                    closeClaimModal();
+                    // Refresh feed
+                    if (typeof fetchDonations === 'function') fetchDonations();
+                    // Also switch to My Claims ?? Maybe stay on feed.
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred.');
+            }
+        });
+
+        // --- Tab Logic ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            document.querySelector(`button[onclick="switchTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+
+            if (tabId === 'my-claims') fetchMyClaims();
+            if (tabId === 'impact') calculateImpact();
+            if (tabId === 'profile') fetchProfile();
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        // --- Fetch My Claims ---
+        async function fetchMyClaims() {
+            const container = document.getElementById('myClaimsGrid');
+            container.innerHTML = '<p>Loading...</p>';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/donations/ngo/${user.id}`);
+                const donations = await res.json();
+
+                if (donations.length === 0) {
+                    container.innerHTML = '<p>You haven\'t claimed any donations yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                donations.forEach(d => {
+                    let cancelBtn = '';
+                    let timeLabel = '';
+                    let isCancelable = false;
+                    let remaining = 0;
+
+                    if (d.status === 'Claimed' && d.claimed_at) {
+                        const claimedTime = new Date(d.claimed_at);
+                        const now = new Date();
+                        const diffMins = (now - claimedTime) / 1000 / 60;
+
+                        if (diffMins <= 20) {
+                            isCancelable = true;
+                            remaining = Math.ceil(20 - diffMins);
+                            timeLabel = `Cancel Claim (${remaining}m left)`;
+                        } else {
+                            timeLabel = 'Cancellation Period Expired';
+                        }
+                    } else {
+                        // Legacy claim or error
+                        timeLabel = 'Cancellation Unavailable';
+                    }
+
+                    if (isCancelable) {
+                        cancelBtn = `
+                                <button class="btn-claim" style="background-color: #ef4444; margin-top: 10px; width: auto; font-size: 0.8rem;" onclick="cancelClaim(${d.id})">
+                                    ${timeLabel}
+                                </button>
+                            `;
+                    } else {
+                        // Optional: Show disabled button to indicate feature exists
+                        cancelBtn = `
+                                <button class="btn-claim" style="background-color: #94a3b8; cursor: not-allowed; margin-top: 10px; width: auto; font-size: 0.8rem;" disabled>
+                                    ${timeLabel}
+                                </button>
+                            `;
+                    }
+
+                    container.innerHTML += `
+                        <div class="donation-card" style="border-left: 5px solid #f59e0b;">
+                             <h3>${d.food_type}</h3>
+                             <p><strong>Qty:</strong> ${d.quantity} | <strong>Status:</strong> ${d.status}</p>
+                             <p><small>${d.pickup_address}</small></p>
+                             ${d.otp && d.delivery_req ? `<div style="background:#e0f2fe; color:#0369a1; padding:8px; border-radius:4px; margin-top:5px; font-weight:bold; text-align:center;">OTP for Driver: ${d.otp}</div>` : ''}
+                             ${cancelBtn}
+                        </div>
+                    `;
+                });
+
+                // Store for stats
+                window.myClaims = donations;
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function cancelClaim(id) {
+            if (!confirm('Are you sure you want to cancel this claim?')) return;
+
+            try {
+                const response = await fetch('/api/cancel-claim', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, ngo_id: user.id })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Claim cancelled.');
+                    fetchMyClaims(); // Refresh list
+                } else {
+                    alert(result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to cancel.');
+            }
+        }
+
+        // --- Impact Stats ---
+        function calculateImpact() {
+            // Ensure we have data
+            const claims = window.myClaims || [];
+            document.getElementById('totalClaimed').innerText = claims.length;
+
+            // Est people served
+            let totalQty = 0;
+            claims.forEach(c => totalQty += (parseInt(c.quantity) || 0));
+            document.getElementById('peopleServed').innerText = totalQty;
+        }
+
+        // --- Profile Logic ---
+        // Preview Image Logic
+        document.getElementById('profilePicInput').addEventListener('change', function (e) {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('avatarPreview').src = e.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Fetch Profile
+        async function fetchProfile() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/user/${user.id}`);
+                const data = await res.json();
+                if (data.error) return;
+
+                // Populate Fields
+                document.getElementById('profileName').value = data.name || '';
+                document.getElementById('profileEmail').value = data.email || '';
+                document.getElementById('profilePhone').value = data.phone || '';
+                document.getElementById('profileAddress').value = data.address || '';
+                document.getElementById('profileBio').value = data.bio || '';
+
+                // Update Sidebar Name
+                document.getElementById('profileNameDisplay').innerText = data.name || 'User';
+
+                // Update Avatar if exists
+                if (data.profile_pic) {
+                    document.getElementById('avatarPreview').src = data.profile_pic;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Update Profile
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            formData.append('id', user.id); // Add User ID
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/user/update`, {
+                    method: 'POST',
+                    body: formData // Send as FormData (multipart)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    alert('Profile Updated Successfully!');
+                    const newName = formData.get('name');
+                    user.name = newName;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    document.getElementById('welcomeMsg').innerText = `Welcome, ${newName}`;
+                } else {
+                    alert('Error updating profile: ' + result.message);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to connect to server');
+            }
+        });
+
+        // --- CHAT LOGIC ---
+        let chatInterval;
+        let currentDonationId = null;
+        let currentReceiverId = null;
+
+        window.openChat = function (donationId, donorName, donorId) {
+            currentDonationId = donationId;
+            currentReceiverId = donorId;
+
+            document.getElementById('chatModal').style.display = 'flex';
+            document.getElementById('chatTitleText').innerText = `Chat: ${donorName}`;
+            document.getElementById('chatMessages').innerHTML = '<p style="text-align:center; color:#888;">Loading...</p>';
+
+            // Mark Read
+            fetch(`${API_BASE_URL}/chat/mark-read`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ donation_id: donationId, user_id: user.id })
+            }).then(() => pollNotifications()); // Refresh badge immediately
+
+            loadMessages();
+
+            // Poll for new messages every 3s
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(loadMessages, 3000);
+        };
+
+        function closeChat(e) {
+            if (e) e.stopPropagation();
+            document.getElementById('chatModal').style.display = 'none';
+            if (chatInterval) clearInterval(chatInterval);
+        }
+
+        async function loadMessages() {
+            if (!currentDonationId) return;
+            try {
+                // Fetch messages for this Donation
+                const res = await fetch(`${API_BASE_URL}/chat/${currentDonationId}`);
+                const msgs = await res.json();
+
+                const container = document.getElementById('chatMessages');
+                container.innerHTML = '';
+
+                if (msgs.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:#888; margin-top:50px;">Start the conversation!</p>';
+                }
+
+                msgs.forEach(m => {
+                    const isMe = m.sender_id == user.id;
+                    const div = document.createElement('div');
+                    div.className = `message ${isMe ? 'message-sent' : 'message-received'}`;
+
+                    // Add sender name for received messages
+                    const senderLabel = !isMe ? `<span class="sender-name">${m.sender_name || 'User'}</span>` : '';
+
+                    div.innerHTML = `
+                        ${senderLabel}
+                        ${m.message}
+                        <span class="message-time">${m.timestamp ? m.timestamp.split(' ')[1].slice(0, 5) : ''}</span>
+                    `;
+                    container.appendChild(div);
+                });
+
+                // Scroll to bottom
+                container.scrollTop = container.scrollHeight;
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/chat/send`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sender_id: user.id,
+                        receiver_id: currentReceiverId,
+                        donation_id: currentDonationId,
+                        message: text
+                    })
+                });
+                if (res.ok) {
+                    input.value = '';
+                    loadMessages(); // Immediate refresh
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // Allow Enter key to send
+        document.getElementById('chatInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // --- Notifications ---
+        async function pollNotifications() {
+            try {
+                // Ensure user.id is valid
+                if (!user || !user.id) return;
+
+                const res = await fetch(`${API_BASE_URL}/notifications/${user.id}`);
+                const data = await res.json();
+
+                let badge = document.getElementById('notifBadge');
+
+                // Find Bell Parent
+                const bellIcon = document.querySelector('.fa-bell');
+                if (!bellIcon) return; // Exit if DOM not ready
+
+                if (data.unread_count > 0) {
+                    if (!badge) {
+                        const iconDiv = bellIcon.parentNode;
+                        const span = document.createElement('span');
+                        span.id = 'notifBadge';
+                        span.style = 'position: absolute; top: -8px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid #0f172a;';
+                        span.innerText = data.unread_count;
+                        iconDiv.appendChild(span);
+                    } else {
+                        badge.innerText = data.unread_count;
+                        badge.style.display = 'flex';
+                    }
+                } else if (badge) {
+                    badge.style.display = 'none';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        setInterval(pollNotifications, 5000); // Check every 5s
+        pollNotifications(); // Initial check
+
+
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate Food | ShareMeal</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/style.css?v=2">
+
+</head>
+
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <a href="/" class="logo">Share<span class="highlight">Meal</span></a>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/donate" class="active">Donate</a></li>
+                <li><a href="/find-food">Find Food</a></li>
+                <li><a href="/login" class="btn-login">Login</a></li>
+            </ul>
+            <div class="mobile-toggle">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Donation Section -->
+    <section class="form-section">
+        <div class="container">
+            <div class="form-wrapper">
+                <div class="form-header">
+                    <h2>List Surplus Food</h2>
+                    <p>Your contribution can save a life today.</p>
+                </div>
+
+                <form id="donationForm">
+                    <!-- Donor Details -->
+                    <div class="form-group">
+                        <label>Organization / Donor Name</label>
+                        <div class="input-icon">
+                            <i class="fa-solid fa-building"></i>
+                            <input type="text" id="donorName" placeholder="Ex: Hotel City Inn or John Doe" required>
+                        </div>
+                    </div>
+
+                    <!-- Food Name -->
+                    <div class="form-group">
+                        <label>Name of the Food</label>
+                        <div class="input-icon">
+                            <i class="fa-solid fa-bowl-food"></i>
+                            <input type="text" id="foodName" placeholder="Ex: Vegetable Biryani" required>
+                        </div>
+                    </div>
+
+                    <!-- Food Details -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Diet Type</label>
+                            <div class="radio-group" style="display: flex; gap: 15px; margin-top: 5px;">
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                    <input type="radio" name="dietType" value="Veg" checked> Veg
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                    <input type="radio" name="dietType" value="Non-Veg"> Non-Veg
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Food Category</label>
+                            <div class="input-icon">
+                                <i class="fa-solid fa-utensils"></i>
+                                <select id="foodType" required>
+                                    <option value="" disabled selected>Select Category</option>
+                                    <option value="cooked_meal">Cooked Meal (Human)</option>
+                                    <option value="raw_ingredients">Raw Ingredients</option>
+                                    <option value="packaged_snacks">Packaged/Snacks</option>
+                                    <option value="animal_feed" style="color: #f59e0b;">Animal Feed (30-50% Spoiled)
+                                    </option>
+                                    <option value="compost" style="color: #ef4444;">Compost (>50% Spoiled)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Quantity (Servings/Kg)</label>
+                            <div class="input-icon">
+                                <i class="fa-solid fa-weight-hanging"></i>
+                                <input type="number" id="quantity" placeholder="Ex: 50" required>
+                            </div>
+                        </div>
+                        <!-- Food Image & AI Analysis -->
+                        <div class="form-group full-width">
+                            <label>Food Image</label>
+
+                            <!-- Upload + Preview -->
+                            <div
+                                style="background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                                <input type="file" id="foodImage" accept="image/*"
+                                    onchange="previewAndShowAnalyze(event)" style="width: 100%;">
+
+                                <div id="imagePreviewContainer"
+                                    style="margin-top: 15px; display: none; text-align: center;">
+                                    <img id="imagePreview" src="" alt="Preview"
+                                        style="max-height: 200px; max-width: 100%; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);">
+
+                                    <button type="button" id="analyzeBtn" onclick="analyzeWithVisionAI()"
+                                        class="btn btn-secondary"
+                                        style="width: 100%; margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none;">
+                                        <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Quality (Vision AI)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Analysis Result -->
+                        <div id="aiAnalysisResult" class="form-group full-width"
+                            style="display: none; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--primary-color); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4
+                                style="color: var(--primary-color); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+                                <i class="fa-solid fa-robot"></i> Vision AI Assessment
+                            </h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <p style="color: #94a3b8; font-size: 0.8rem;">Freshness Score</p>
+                                    <p id="aiFreshnessScore"
+                                        style="font-weight: bold; font-size: 1.2rem; color: white;">--</p>
+                                </div>
+                                <div>
+                                    <p style="color: #94a3b8; font-size: 0.8rem;">AI Category Recommendation</p>
+                                    <p id="aiRecommendation"
+                                        style="font-weight: bold; font-size: 1rem; color: #f59e0b;">--</p>
+                                </div>
+                            </div>
+                            <div id="aiWarning"
+                                style="margin-top: 10px; font-size: 0.85rem; color: #f87171; display: none;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Identified as potential spoilage.
+                                Redirecting to appropriate category...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preparation Time -->
+                    <div class="form-group">
+                        <label>When was the food prepared?</label>
+                        <div class="input-icon">
+                            <i class="fa-solid fa-clock"></i>
+                            <input type="datetime-local" id="preparationTime" required>
+                        </div>
+                        <small style="color:var(--text-secondary); font-size:0.8rem;">To ensure freshness, please
+                            provide accurate time.</small>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label>Food Description</label>
+                        <textarea id="description" rows="3"
+                            placeholder="Ex: Rice, Dal, and Mixed Veg Curry prepared at 2 PM"></textarea>
+                    </div>
+
+                    <!-- Contact & Location -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Mobile Number</label>
+                            <div class="input-icon">
+                                <i class="fa-solid fa-phone"></i>
+                                <input type="tel" id="mobile" placeholder="Contact Number" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Location / Address</label>
+                            <div class="input-icon">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <input type="text" id="address" placeholder="Pickup Address" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-share-from-square"></i> Post Donation
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Notification Toast (Hidden by default) -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-check-circle"></i>
+        <span>Donation Posted Successfully!</span>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('user');
+            if (userStr) {
+                // Update Logo Link
+                const logo = document.querySelector('.logo');
+                if (logo) logo.href = '/donor-home';
+
+                // Update Nav Links
+                const navLinks = document.querySelectorAll('.nav-links a');
+                navLinks.forEach(link => {
+                    const text = link.textContent.trim();
+                    if (text === 'Home') {
+                        link.href = '/donor-home';
+                    } else if (text === 'Login') {
+                        link.textContent = 'Logout';
+                        link.href = '#';
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            localStorage.removeItem('user');
+                            window.location.href = '/login';
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+    <script src="/app.js"></script>
+    <script>
+        function previewAndShowAnalyze(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('imagePreview');
+                    img.src = e.target.result;
+                    document.getElementById('imagePreviewContainer').style.display = 'block';
+
+                    // Reset AI result if re-uploading
+                    document.getElementById('aiAnalysisResult').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function analyzeWithVisionAI() {
+            const btn = document.getElementById('analyzeBtn');
+            const resultBox = document.getElementById('aiAnalysisResult');
+            const scoreEl = document.getElementById('aiFreshnessScore');
+            const recEl = document.getElementById('aiRecommendation');
+            const warningEl = document.getElementById('aiWarning');
+            const foodTypeSelect = document.getElementById('foodType');
+            const fileInput = document.getElementById('foodImage');
+
+            if (!fileInput.files || !fileInput.files[0]) {
+                alert("Please upload an image first.");
+                return;
+            }
+
+            // 1. Loading State
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Scanning Quality...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                // 2. Logic simulation
+                // Check filename to allow user to simulate scenarios
+                const filename = fileInput.files[0].name.toLowerCase();
+                let score = 0;
+
+                if (filename.includes('spoiled') || filename.includes('rotten') || filename.includes('bad')) {
+                    score = Math.floor(Math.random() * 30) + 10; // 10-40%
+                } else if (filename.includes('old') || filename.includes('stale')) {
+                    score = Math.floor(Math.random() * 20) + 50; // 50-70%
+                } else {
+                    score = Math.floor(Math.random() * 25) + 75; // 75-100%
+                }
+
+                // 3. Apply Outcome
+                resultBox.style.display = 'block';
+
+                if (score < 50) {
+                    // Spoiled -> Compost
+                    scoreEl.innerText = `${score}% (Critical Spoilage)`;
+                    scoreEl.style.color = '#ef4444';
+                    recEl.innerText = 'Listed for: Compost / Waste Management';
+                    foodTypeSelect.value = 'compost';
+                    warningEl.innerText = '⚠️ Hazardous Quality Detected. Expiry set to IMMEDIATE. Listed for Compost only.';
+                    warningEl.style.display = 'block';
+
+                    // Set prep time to indicate old
+                    const oldDate = new Date();
+                    oldDate.setDate(oldDate.getDate() - 2);
+                    document.getElementById('preparationTime').value = oldDate.toISOString().slice(0, 16);
+                }
+                else if (score >= 50 && score <= 70) {
+                    // Moderate -> Animal Feed
+                    scoreEl.innerText = `${score}% (Moderate Spoilage)`;
+                    scoreEl.style.color = '#f59e0b';
+                    recEl.innerText = 'Listed for: Animal Feed (<48hrs)';
+                    foodTypeSelect.value = 'animal_feed';
+                    warningEl.innerText = '⚠️ Not fit for human consumption. Redirected to Animal Feed partners. Expiry < 48hrs.';
+                    warningEl.style.display = 'block';
+                }
+                else {
+                    // Good -> Human
+                    scoreEl.innerText = `${score}% (Good Condition)`;
+                    scoreEl.style.color = '#10b981';
+                    recEl.innerText = 'Listed for: Human Consumption';
+                    if (!foodTypeSelect.value) foodTypeSelect.value = 'cooked_meal';
+                    warningEl.style.display = 'none';
+                }
+
+                // Reset Button
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Analysis Complete';
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    btn.style.background = ''; // Reset
+                }, 3000);
+
+            }, 2000); // 2s scan simulation
+        }
+    </script>
+</body>
+
+</html>
