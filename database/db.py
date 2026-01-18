@@ -54,9 +54,26 @@ def init_db():
         )
     ''')
     
+    # Create Emergency Broadcasts Table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS emergency_broadcasts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ngo_id INTEGER,
+            title TEXT,
+            description TEXT,
+            area TEXT,
+            contact_details TEXT,
+            level TEXT,
+            status TEXT DEFAULT 'Active',
+            timestamp TEXT,
+            FOREIGN KEY (ngo_id) REFERENCES users (id)
+        )
+    ''')
+
     # Simple migration for existing tables (if columns missing)
     try:
         cursor.execute("ALTER TABLE donations ADD COLUMN food_name TEXT")
+
         cursor.execute("ALTER TABLE donations ADD COLUMN image_path TEXT")
         cursor.execute("ALTER TABLE donations ADD COLUMN diet_type TEXT")
         cursor.execute("ALTER TABLE donations ADD COLUMN preparation_time TEXT")

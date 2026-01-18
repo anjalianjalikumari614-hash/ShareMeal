@@ -49,6 +49,7 @@
         <div class="dashboard-tabs">
             <button class="tab-btn active" onclick="switchTab('feed')">Find Food</button>
             <button class="tab-btn" onclick="switchTab('my-claims')">My Collections</button>
+            <button class="tab-btn" onclick="switchTab('broadcasts')">Broadcasts 📢</button>
             <button class="tab-btn" onclick="switchTab('impact')">Impact</button>
             <button class="tab-btn" onclick="switchTab('profile')">Profile</button>
         </div>
@@ -79,7 +80,22 @@
             </div>
         </div>
 
-        <!-- 3. Impact Tab -->
+        <!-- 3. Broadcasts Tab (NEW) -->
+        <div id="broadcasts" class="tab-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:white;">Emergency Broadcasts</h2>
+                <button class="btn btn-primary" onclick="openBroadcastModal()" style="background:#ef4444; border:none;">
+                    <i class="fa-solid fa-bullhorn"></i> Publish New Alert
+                </button>
+            </div>
+
+            <div id="broadcastGrid" class="donations-grid" style="grid-template-columns: 1fr;">
+                <!-- List of broadcasts -->
+                <p style="color: #94a3b8;">Loading history...</p>
+            </div>
+        </div>
+
+        <!-- 4. Impact Tab -->
         <div id="impact" class="tab-content">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
                 <div class="profile-card" style="text-align: center; padding: 2rem;">
@@ -96,7 +112,7 @@
             </div>
         </div>
 
-        <!-- 4. Profile Tab -->
+        <!-- 5. Profile Tab -->
         <div id="profile" class="tab-content">
             <div class="profile-card">
                 <form id="profileForm">
@@ -212,6 +228,10 @@
                                 Check this box if you need a volunteer driver to pick this up for you.
                                 <br>Uncheck if you will pick it up yourself.
                             </small>
+                            <div id="feeNote"
+                                style="display:none; color: #f59e0b; margin-top: 5px; font-weight:bold; font-size:0.9rem;">
+                                <i class="fa-solid fa-coins"></i> Delivery Fee: ₹50.00
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -224,9 +244,57 @@
         </div>
     </div>
 
+    <!-- Broadcast Create Modal -->
+    <div id="broadcastModal" class="modal">
+        <div class="modal-content" style="border-top: 5px solid #ef4444;">
+            <span class="close-modal" onclick="closeBroadcastModal()">&times;</span>
+            <h2 style="color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i> Create Emergency Alert</h2>
+            <p>This will be broadcasted to all logged-in donors immediately.</p>
+
+            <form id="broadcastForm">
+                <div class="form-group">
+                    <label>Title / Situation</label>
+                    <input type="text" id="bcTitle" placeholder="e.g. Flash Floods in Downtown" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Severity Level</label>
+                    <div class="radio-group" style="display:flex; gap:15px; margin-top:5px;">
+                        <label style="color: #ef4444; font-weight:bold;"><input type="radio" name="bcLevel"
+                                value="Critical" checked> Critical</label>
+                        <label style="color: #f59e0b; font-weight:bold;"><input type="radio" name="bcLevel"
+                                value="Warning"> Warning</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Affected Area / Location</label>
+                    <input type="text" id="bcArea" placeholder="e.g. Sector 4, Indiranagar" required>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Description & Needs</label>
+                    <textarea id="bcDesc" rows="3"
+                        placeholder="Describe the situation and what food/resources are urgently needed..."
+                        required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Contact Details</label>
+                    <input type="text" id="bcContact" placeholder="Phone Number / Coordinator Name" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%; background: #ef4444; margin-top:10px;">
+                    <i class="fa-solid fa-tower-broadcast"></i> Publish Broadcast
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Script Overrides for NGO Logic -->
     <script src="/app.js?v=3"></script>
     <script>
+        // ... (API_BASE_URL and Auth checks remain same) ...
         const API_BASE_URL = 'http://localhost:3000/api';
         const userStr = localStorage.getItem('user');
 
@@ -242,6 +310,129 @@
         }
 
         document.getElementById('welcomeMsg').innerText = `Welcome, ${user.name}`;
+
+        // --- BROADCAST LOGIC ---
+        function openBroadcastModal() {
+            document.getElementById('broadcastModal').style.display = 'block';
+        }
+        function closeBroadcastModal() {
+            document.getElementById('broadcastModal').style.display = 'none';
+        }
+
+        document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Publishing...';
+            btn.disabled = true;
+
+            try {
+                const payload = {
+                    ngo_id: user.id,
+                    title: document.getElementById('bcTitle').value,
+                    level: document.querySelector('input[name="bcLevel"]:checked').value,
+                    area: document.getElementById('bcArea').value,
+                    description: document.getElementById('bcDesc').value,
+                    contact_details: document.getElementById('bcContact').value
+                };
+
+                const res = await fetch(`${API_BASE_URL}/broadcast/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert('Broadcast Published Successfully!');
+                    closeBroadcastModal();
+                    e.target.reset();
+                    fetchMyBroadcasts();
+                } else {
+                    alert('Failed to publish');
+                }
+            } catch (e) { console.error(e); alert('Error'); }
+            finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        async function fetchMyBroadcasts() {
+            const container = document.getElementById('broadcastGrid');
+            container.innerHTML = '<p>Loading...</p>';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/broadcast/ngo/${user.id}`);
+                const list = await res.json();
+
+                container.innerHTML = '';
+                if (list.length === 0) {
+                    container.innerHTML = '<p>No broadcasts history.</p>';
+                    return;
+                }
+
+                list.forEach(item => {
+                    const isResolved = item.status === 'Resolved';
+                    const color = item.level === 'Critical' ? '#ef4444' : '#f59e0b';
+
+                    container.innerHTML += `
+                        <div class="donation-card" style="border-left: 5px solid ${isResolved ? '#94a3b8' : color}; opacity: ${isResolved ? 0.7 : 1};">
+                            <div style="display:flex; justify-content:space-between;">
+                                <h3 style="color:${isResolved ? '#94a3b8' : 'white'}">${item.title} <span style="font-size:0.8rem; background:${color}; color:white; padding:2px 6px; border-radius:4px;">${item.level}</span></h3>
+                                <span style="font-size:0.8rem; color:#888;">${item.timestamp}</span>
+                            </div>
+                            <p>${item.description}</p>
+                            <p><strong>Area:</strong> ${item.area} | <strong>Contact:</strong> ${item.contact_details}</p>
+                            
+                            ${!isResolved ? `
+                                <div style="display:flex; gap:10px; margin-top:10px;">
+                                    <button onclick="resolveBroadcast(${item.id})" class="btn-claim" style="width:auto; background:#10b981; border:none; color:white;">
+                                        <i class="fa-solid fa-check"></i> Mark Resolved
+                                    </button>
+                                    <button onclick="deleteBroadcast(${item.id})" class="btn-claim" style="width:auto; background:#ef4444; border:none; color:white;">
+                                        <i class="fa-solid fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            ` : `
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="color:#10b981; font-weight:bold;">Resolved</span>
+                                    <button onclick="deleteBroadcast(${item.id})" style="background:none; border:none; color:#94a3b8; cursor:pointer;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                    `;
+                });
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function resolveBroadcast(id) {
+            if (!confirm('Mark this emergency as resolved? This will remove alerts from donor pages.')) return;
+            try {
+                await fetch(`${API_BASE_URL}/broadcast/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                fetchMyBroadcasts();
+            } catch (e) { alert('Error'); }
+        }
+
+        async function deleteBroadcast(id) {
+            if (!confirm('Are you sure you want to permanently delete this broadcast?')) return;
+            try {
+                const res = await fetch(`${API_BASE_URL}/broadcast/delete/${id}`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) {
+                    fetchMyBroadcasts(); // Refresh list
+                } else {
+                    alert('Failed to delete.');
+                }
+            } catch (e) { console.error(e); alert('Error deleting broadcast'); }
+        }
 
         // --- Claim Modal Logic ---
         const claimModal = document.getElementById('claimModal');
@@ -266,6 +457,13 @@
             document.getElementById('claimPhone').value = user.phone || '';
             document.getElementById('claimAddress').value = user.address || '';
 
+            // Reset Checkbox state
+            document.getElementById('claimDeliveryReq').checked = false;
+
+            // Trigger change event to set button text
+            const event = new Event('change');
+            document.getElementById('claimDeliveryReq').dispatchEvent(event);
+
             claimModal.style.display = 'block';
         }
 
@@ -277,11 +475,49 @@
             if (event.target == claimModal) {
                 closeClaimModal();
             }
+            if (event.target == document.getElementById('broadcastModal')) {
+                closeBroadcastModal();
+            }
         }
+
+        // Toggle Button Text based on Checkbox
+        document.getElementById('claimDeliveryReq').addEventListener('change', function (e) {
+            const btn = document.querySelector('#claimForm button[type="submit"]');
+            if (e.target.checked) {
+                btn.innerHTML = 'Pay ₹50 to Claim Donation';
+                btn.style.background = '#f59e0b'; // Gold for pay
+                document.getElementById('feeNote').innerHTML = '<i class="fa-solid fa-coins"></i> Delivery Charges: ₹50.00 will be applied.';
+                document.getElementById('feeNote').style.display = 'block';
+            } else {
+                btn.innerHTML = 'Confirm & Claim Donation (Free)';
+                btn.style.background = 'var(--primary-color)';
+                document.getElementById('feeNote').style.display = 'none';
+            }
+        });
 
         // Handle Claim Submit
         document.getElementById('claimForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+
+            const isDelivery = document.getElementById('claimDeliveryReq').checked;
+
+            if (isDelivery) {
+                // Trigger Mock Payment
+                const paid = confirm("💰 ShareMeal Secure Payment Gateway\n\n-------------------------------\nPayable Amount: ₹50.00\nReason: Delivery Partner Fee\n-------------------------------\n\nClick OK to simulate Successful Payment (UPI/Card)\nClick Cancel to Abort");
+
+                if (!paid) {
+                    alert("Payment Cancelled. Claim not processed.");
+                    return;
+                }
+
+                // Show simulated processing
+                const btn = e.target.querySelector('button');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Processing Payment...';
+                btn.disabled = true;
+
+                await new Promise(r => setTimeout(r, 1500)); // Simulate delay
+            }
 
             const donationId = document.getElementById('claimDonationId').value;
             // We could capture these values and update profile if we wanted:
@@ -297,13 +533,18 @@
                         id: donationId,
                         status: 'Claimed',
                         ngo_id: user.id,
-                        delivery_req: document.getElementById('claimDeliveryReq').checked
+                        delivery_req: isDelivery,
+                        payment_status: isDelivery ? 'PAID_MOCK_50' : 'NA'
                     })
                 });
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert('Donation Claimed Successfully! Please coordinate pickup.');
+                    if (isDelivery) {
+                        alert('✅ Payment Successful!\nDonation Claimed & Delivery Requested.');
+                    } else {
+                        alert('Donation Claimed Successfully! Please coordinate pickup.');
+                    }
                     closeClaimModal();
                     // Refresh feed
                     if (typeof fetchDonations === 'function') fetchDonations();
@@ -314,6 +555,11 @@
             } catch (err) {
                 console.error(err);
                 alert('An error occurred.');
+            } finally {
+                // Reset button
+                const btn = e.target.querySelector('button');
+                btn.disabled = false;
+                // Text will be reset by toggle listener or next open
             }
         });
 
@@ -326,6 +572,7 @@
             document.getElementById(tabId).classList.add('active');
 
             if (tabId === 'my-claims') fetchMyClaims();
+            if (tabId === 'broadcasts') fetchMyBroadcasts();
             if (tabId === 'impact') calculateImpact();
             if (tabId === 'profile') fetchProfile();
         }

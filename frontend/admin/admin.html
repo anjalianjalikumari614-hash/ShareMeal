@@ -878,17 +878,27 @@
                 }
             });
 
-            // Diet Chart
+            // Diet Chart logic
+            // Ensure Veg is Green (#10b981) and Non-Veg is Red (#ef4444)
+            const dietLabels = Object.keys(data.diet);
+            const dietValues = Object.values(data.diet);
+
+            const dietColors = dietLabels.map(label => {
+                const l = label.toLowerCase();
+                if (l.includes('non') || l.includes('veg') === false) return '#ef4444'; // Red for Non-Veg
+                return '#10b981'; // Green for Veg
+            });
+
             const ctxDiet = document.getElementById('dietChart').getContext('2d');
             if (dietChartInstance) dietChartInstance.destroy();
 
             dietChartInstance = new Chart(ctxDiet, {
                 type: 'pie',
                 data: {
-                    labels: Object.keys(data.diet),
+                    labels: dietLabels,
                     datasets: [{
-                        data: Object.values(data.diet),
-                        backgroundColor: ['#4ade80', '#f87171'],
+                        data: dietValues,
+                        backgroundColor: dietColors,
                         borderWidth: 0
                     }]
                 },

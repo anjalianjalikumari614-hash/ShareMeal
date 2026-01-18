@@ -1,4 +1,5 @@
 console.log('ShareMeal Client Loaded');
+if (typeof window !== 'undefined') window.appVersion = '3.1';
 
 // Navbar Scroll Effect
 const navbar = document.querySelector('.navbar');
@@ -16,67 +17,10 @@ if (navbar) {
 }
 
 // --- Handle Donation Form Submission ---
+// Logic moved to donate.html for reliability
 const donationForm = document.getElementById('donationForm');
-
 if (donationForm) {
-    donationForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Check Auth
-        const userStr = localStorage.getItem('user');
-        if (!userStr) {
-            alert('Please login to donate.');
-            window.location.href = '/login';
-            return;
-        }
-        const user = JSON.parse(userStr);
-
-        // Collect Data using FormData
-        const formData = new FormData();
-        formData.append('donorName', document.getElementById('donorName').value);
-        formData.append('foodName', document.getElementById('foodName').value);
-        formData.append('foodType', document.getElementById('foodType').value);
-        formData.append('quantity', document.getElementById('quantity').value);
-        formData.append('description', document.getElementById('description').value);
-        formData.append('mobile', document.getElementById('mobile').value);
-        formData.append('address', document.getElementById('address').value);
-        formData.append('donorId', user.id);
-
-        // Radio Button
-        const dietTypeElem = document.querySelector('input[name="dietType"]:checked');
-        if (dietTypeElem) {
-            formData.append('dietType', dietTypeElem.value);
-        }
-
-        const prepTime = document.getElementById('preparationTime');
-        if (prepTime) {
-            formData.append('preparationTime', prepTime.value);
-        }
-
-        if (fileInput && fileInput.files[0]) {
-            formData.append('image', fileInput.files[0]);
-        }
-
-        try {
-            // Send Data to Server
-            const response = await fetch('/api/donate', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                showToast();
-                donationForm.reset();
-            } else {
-                alert('Error: ' + (result.message || 'Something went wrong.'));
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to connect to the server.');
-        }
-    });
+    // Listener removed to prevent conflicts
 }
 
 function showToast() {
@@ -383,11 +327,23 @@ function renderDonations(data, grid, isDeliveryView) {
         }
 
         // Expiry Badge
-        // Expiry Badge
         const prepTime = donation.preparation_time || donation.timestamp;
         const expiryHtml = donation.status === 'Available'
             ? `<div class="expiry-cnt" data-prep="${prepTime}">Calculating...</div>`
             : '';
+
+        let emergencyTag = '';
+        const desc = donation.instructions || '';
+        // Check case-insensitive for 'emergency'
+        if (desc.toUpperCase().includes('EMERGENCY')) {
+            emergencyTag = `<div style="background: #ef4444; color: white; text-align: center; font-weight: bold; font-size: 0.8rem; padding: 6px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"><i class="fa-solid fa-triangle-exclamation"></i> EMERGENCY DONATION</div>`;
+        }
+        else if (desc.toUpperCase().includes('BULK')) {
+            emergencyTag = `<div style="background: #f59e0b; color: #1e293b; text-align: center; font-weight: bold; font-size: 0.8rem; padding: 6px; border-radius: 4px; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"><i class="fa-solid fa-champagne-glasses"></i> BULK EVENT DONATION</div>`;
+        }
+
+        // Use proper title if available
+        const title = (donation.food_name && donation.food_name !== 'undefined') ? donation.food_name : (donation.food_type || donation.foodType || 'Food').replace('_', ' ').toUpperCase();
 
         card.innerHTML = `
             ${imageHtml}
@@ -400,7 +356,8 @@ function renderDonations(data, grid, isDeliveryView) {
                 </div>
             </div>
             
-            <h3>${(donation.food_type || donation.foodType || 'Food').replace('_', ' ').toUpperCase()}</h3>
+            ${emergencyTag}
+            <h3>${title}</h3>
             
             ${expiryHtml}
             
@@ -530,10 +487,12 @@ function showEmergencyBanner(type, data) {
         msg = `${data.message} (${data.location})`;
     } else {
         // Broadcast
-        msg = data.message;
+        // Updated to match DB schema: title, description, area, contact_details
         if (data.level === 'Warning') bgColor = '#f59e0b';
         if (data.level === 'Critical') bgColor = '#ef4444';
-        title = data.level === 'Critical' ? 'CRITICAL ALERT' : 'System Announcement';
+        title = data.title || (data.level === 'Critical' ? 'CRITICAL ALERT' : 'System Announcement');
+
+        msg = `<strong>${data.area}</strong><br>${data.description}<br><br><i class="fa-solid fa-phone"></i> ${data.contact_details}`;
     }
 
     banner.style.cssText = `

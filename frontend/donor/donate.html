@@ -233,7 +233,76 @@
             }
         });
     </script>
-    <script src="/app.js"></script>
+    <script src="/app.js?v=4"></script>
+    <script>
+        document.getElementById('donationForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            // Auth Check
+            const userStr = localStorage.getItem('user');
+            if (!userStr) {
+                alert('Please login to post a donation.');
+                window.location.href = '/login';
+                return;
+            }
+            const user = JSON.parse(userStr);
+
+            // Basic Validation
+            if (!user.id) {
+                alert('Session invalid. Please login again.');
+                return;
+            }
+
+            const formData = new FormData();
+            try {
+                // Helper to get value safely
+                const val = (id) => document.getElementById(id).value;
+
+                formData.append('donorName', val('donorName'));
+                formData.append('foodName', val('foodName'));
+                formData.append('foodType', val('foodType'));
+                formData.append('quantity', val('quantity'));
+                formData.append('description', val('description'));
+                formData.append('mobile', val('mobile'));
+                formData.append('address', val('address'));
+                formData.append('donorId', user.id);
+                formData.append('preparationTime', val('preparationTime'));
+
+                // Radio
+                const diet = document.querySelector('input[name="dietType"]:checked');
+                if (diet) formData.append('dietType', diet.value);
+
+                // File
+                const fileInput = document.getElementById('foodImage');
+                if (fileInput && fileInput.files[0]) {
+                    formData.append('image', fileInput.files[0]);
+                }
+
+                // API Call
+                const res = await fetch('/api/donate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Show success
+                    const toast = document.getElementById('toast');
+                    toast.classList.add('show');
+                    setTimeout(() => toast.classList.remove('show'), 3000);
+
+                    document.getElementById('donationForm').reset();
+                    document.getElementById('imagePreviewContainer').style.display = 'none';
+                } else {
+                    alert('Failed to post: ' + (data.message || 'Unknown error'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error submitting form: ' + err.message);
+            }
+        });
+    </script>
     <script>
         function previewAndShowAnalyze(event) {
             const file = event.target.files[0];

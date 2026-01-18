@@ -332,7 +332,8 @@
                 </div>
                 <!-- Notifications Dropdown (Hidden) -->
 
-                <a href="/donate" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Donation</a>
+                <button onclick="openDonationTypeModal()" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New
+                    Donation</button>
             </div>
         </div>
 
@@ -476,6 +477,50 @@
             </div>
         </div>
 
+        <!-- DONATION TYPE SELECTION MODAL -->
+        <div id="donationTypeModal" class="modal-overlay"
+            style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:3000; justify-content:center; align-items:center;">
+            <div class="modal-content"
+                style="background:#1e293b; padding:2rem; border-radius:12px; border:1px solid #334155; width:95%; max-width:600px; color:white; text-align:center;">
+                <h2 style="margin-bottom:2rem;">Start New Donation</h2>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <!-- Option 1: Standard -->
+                    <a href="/donate" style="text-decoration:none;">
+                        <div style="background:rgba(255,255,255,0.05); border:2px solid transparent; border-radius:12px; padding:2rem 1rem; cursor:pointer; transition:0.2s;"
+                            onmouseover="this.style.borderColor='#10b981'; this.style.background='rgba(16,185,129,0.1)'"
+                            onmouseout="this.style.borderColor='transparent'; this.style.background='rgba(255,255,255,0.05)'">
+                            <div
+                                style="background:#10b981; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+                                <i class="fa-solid fa-utensils" style="font-size:1.5rem; color:white;"></i>
+                            </div>
+                            <h3 style="color:white; margin-bottom:10px;">Simple Donation</h3>
+                            <p style="color:#94a3b8; font-size:0.9rem;">Donate small quantities of cooked food or raw
+                                items from your home or restaurant.</p>
+                        </div>
+                    </a>
+
+                    <!-- Option 2: Bulk Impact -->
+                    <a href="/donate-bulk" style="text-decoration:none;">
+                        <div style="background:rgba(255,255,255,0.05); border:2px solid transparent; border-radius:12px; padding:2rem 1rem; cursor:pointer; transition:0.2s;"
+                            onmouseover="this.style.borderColor='#f59e0b'; this.style.background='rgba(245,158,11,0.1)'"
+                            onmouseout="this.style.borderColor='transparent'; this.style.background='rgba(255,255,255,0.05)'">
+                            <div
+                                style="background:#f59e0b; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+                                <i class="fa-solid fa-champagne-glasses" style="font-size:1.5rem; color:white;"></i>
+                            </div>
+                            <h3 style="color:white; margin-bottom:10px;">Bulk Event Surplus</h3>
+                            <p style="color:#94a3b8; font-size:0.9rem;">Large scale donation from Weddings, Parties, or
+                                Events. Special logistics support.</p>
+                        </div>
+                    </a>
+                </div>
+
+                <button onclick="document.getElementById('donationTypeModal').style.display='none'"
+                    style="margin-top:2rem; background:transparent; border:none; color:#94a3b8; cursor:pointer;">Close</button>
+            </div>
+        </div>
+
         <!-- Edit Donation Modal -->
         <div id="editModal" class="modal-overlay"
             style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; justify-content:center; align-items:center;">
@@ -601,6 +646,11 @@
     <!-- Scripts -->
     <script>
         const API_BASE_URL = 'http://localhost:3000/api';
+
+        function openDonationTypeModal() {
+            document.getElementById('donationTypeModal').style.display = 'flex';
+        }
+
         const userStr = localStorage.getItem('user');
 
         if (!userStr) {
@@ -661,6 +711,9 @@
                 const card = document.createElement('div');
                 card.className = 'donation-card';
 
+                // Use food_name if available (it often contains the user-typed "Food Name"), fallback to type
+                const title = (d.food_name && d.food_name !== 'undefined') ? d.food_name : d.food_type.replace(/_/g, ' ');
+
                 let imageHtml = '';
                 if (d.image_path) {
                     imageHtml = `<img src="${d.image_path}" class="food-image-thumb" alt="Food Image">`;
@@ -682,14 +735,27 @@
                     `;
                 }
 
+                let emergencyTag = '';
+                const desc = d.instructions || '';
+
+                // Check for Emergency
+                if (desc.toUpperCase().includes('EMERGENCY')) {
+                    emergencyTag = `<div style="background: #ef4444; color: white; text-align: center; font-weight: bold; font-size: 0.8rem; padding: 4px; border-radius: 4px; margin-bottom: 8px;"><i class="fa-solid fa-triangle-exclamation"></i> EMERGENCY DONATION</div>`;
+                }
+                // Check for Bulk
+                else if (desc.toUpperCase().includes('BULK')) {
+                    emergencyTag = `<div style="background: #f59e0b; color: #1e293b; text-align: center; font-weight: bold; font-size: 0.8rem; padding: 4px; border-radius: 4px; margin-bottom: 8px;"><i class="fa-solid fa-champagne-glasses"></i> BULK EVENT DONATION</div>`;
+                }
+
                 card.innerHTML = `
+                    ${emergencyTag}
                     <div class="donation-header">
-                        <span>${d.food_type} (${d.diet_type || 'N/A'})</span>
+                        <span style="text-transform: capitalize; font-size: 1.1rem;">${title} <span style="font-size: 0.8rem; color: #94a3b8; font-weight: normal;">• ${d.diet_type || 'N/A'}</span></span>
                         <span class="status-badge status-${d.status.toLowerCase()}">${d.status}</span>
                     </div>
-                    <p><strong>Qty:</strong> ${d.quantity}</p>
+                    <p style="margin-top: 5px;"><strong>Qty:</strong> ${d.quantity}</p>
                     <p><strong>Loc:</strong> ${d.pickup_address}</p>
-                    <p><small>${d.timestamp}</small></p>
+                    <p><small style="color: #94a3b8;">${d.timestamp}</small></p>
                     ${imageHtml}
                     ${actionButtons}
                 `;

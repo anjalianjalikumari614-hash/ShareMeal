@@ -371,8 +371,28 @@
             }
         }
 
+        async function fetchStats() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/donations/delivery/${user.id}`);
+                const jobs = await res.json();
+
+                // Filter for completed deliveries TODAY
+                const today = new Date().toDateString();
+                const completedToday = jobs.filter(j =>
+                    j.status === 'Delivered' &&
+                    new Date(j.timestamp).toDateString() === today
+                );
+
+                document.getElementById('statToday').innerText = completedToday.length;
+
+            } catch (e) {
+                console.error('Error fetching stats:', e);
+            }
+        }
+
         // Auto Refresh
         fetchNewRequests();
+        fetchStats();
         setInterval(fetchNewRequests, 10000);
         fetchActiveJob(); // Check if we are already in a job
 
@@ -621,6 +641,57 @@
                 body: JSON.stringify({ id, status })
             });
             if (res.ok) fetchActiveJob();
+        }
+
+        async function fetchHistory() {
+            const container = document.getElementById('historyList');
+            container.innerHTML = '<p style="text-align:center; color:#64748b;">Loading history...</p>';
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/donations/delivery/${user.id}`);
+                const jobs = await res.json();
+
+                // Filter for completed deliveries
+                const history = jobs.filter(j => j.status === 'Delivered');
+
+                if (history.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">No past deliveries found.</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                history.forEach(job => {
+                    container.innerHTML += `
+                        <div class="task-card" style="opacity: 0.8;">
+                            <div class="task-header">
+                                <span class="task-badge" style="background:#10b981; color:#022c22;">Delivered</span>
+                                <span style="font-size:0.8rem; color:#94a3b8;">${new Date(job.timestamp).toLocaleDateString()}</span>
+                            </div>
+                            <div class="task-body">
+                                <div class="route-details">
+                                    <div class="route-point">
+                                        <h4>PICKUP</h4>
+                                        <p>${job.pickup_address}</p>
+                                    </div>
+                                    <div class="route-point drop" style="margin-top:10px;">
+                                        <h4>DROP-OFF</h4>
+                                        <p>NGO Location</p>
+                                    </div>
+                                </div>
+                                <div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px;">
+                                    <span style="font-size:0.9rem; color:#cbd5e1;">
+                                        <i class="fa-solid fa-box"></i> ${job.food_type} (${job.quantity} Servings)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<p style="color:red; text-align:center;">Failed to load history.</p>';
+            }
         }
 
         function logout() {

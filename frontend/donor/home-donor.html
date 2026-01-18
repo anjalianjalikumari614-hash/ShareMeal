@@ -40,6 +40,36 @@
         </div>
     </nav>
 
+    <!-- ACTIVE EMERGENCY ALERT SECTION -->
+    <div id="emergency-alert-section" class="container"
+        style="display:none; margin-top: 100px; margin-bottom: -60px; position:relative; z-index:5;">
+        <div
+            style="background: rgba(239, 68, 68, 0.1); border: 2px solid #ef4444; border-radius: 12px; padding: 20px; color: white;">
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+                <div>
+                    <h2 id="embTitle" style="color: #ef4444; margin-bottom:10px;"><i
+                            class="fa-solid fa-triangle-exclamation"></i> Emergency Alert</h2>
+                    <p id="embDesc" style="font-size: 1.1rem; margin-bottom: 20px;">Loading...</p>
+
+                    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                        <span
+                            style="background:rgba(239, 68, 68, 0.2); padding:5px 10px; border-radius:6px; color:#fca5a5;">
+                            <i class="fa-solid fa-location-dot"></i> <strong id="embArea">Area</strong>
+                        </span>
+                        <span
+                            style="background:rgba(239, 68, 68, 0.2); padding:5px 10px; border-radius:6px; color:#fca5a5;">
+                            <i class="fa-solid fa-phone"></i> <strong id="embContact">Contact</strong>
+                        </span>
+                    </div>
+                </div>
+                <a href="/donate-emergency" class="btn"
+                    style="background: #ef4444; color: white; border:none; white-space:nowrap;">
+                    <i class="fa-solid fa-hand-holding-medical"></i> Donate Now
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Hero Section -->
     <header class="hero">
         <div class="container hero-container">
@@ -142,7 +172,29 @@
         }
 
         fetchRecentActivity();
+        fetchRecentActivity();
         fetchStats();
+        fetchEmergencyForPage();
+
+        async function fetchEmergencyForPage() {
+            try {
+                const res = await fetch('/api/broadcast/active');
+                const data = await res.json();
+
+                if (data && data.status === 'Active') {
+                    const section = document.getElementById('emergency-alert-section');
+                    section.style.display = 'block';
+
+                    document.getElementById('embTitle').innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${data.title}`;
+                    document.getElementById('embDesc').innerText = data.description;
+                    document.getElementById('embArea').innerText = data.area;
+                    document.getElementById('embContact').innerText = data.contact_details;
+
+                    // Adjust Hero padding a bit since we inserted content above it
+                    document.querySelector('.hero').style.paddingTop = '60px';
+                }
+            } catch (e) { console.error('Error fetching emergency for page:', e); }
+        }
 
         async function fetchStats() {
             try {
@@ -155,6 +207,8 @@
             } catch (e) { console.error('Error fetching stats:', e); }
         }
     </script>
+    </script>
+    <script src="/app.js?v=5"></script>
 </body>
 
 </html>

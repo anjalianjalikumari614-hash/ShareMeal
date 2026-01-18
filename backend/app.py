@@ -36,6 +36,14 @@ def donor_home():
 def donate():
     return send_from_directory('../frontend/donor', 'donate.html')
 
+@app.route('/donate-emergency')
+def donate_emergency():
+    return send_from_directory('../frontend/donor', 'donate-emergency.html')
+
+@app.route('/donate-bulk')
+def donate_bulk():
+    return send_from_directory('../frontend/donor', 'donate-bulk.html')
+
 @app.route('/find-food')
 def find_food():
     return send_from_directory('../frontend/ngos', 'find-food.html')
@@ -512,8 +520,13 @@ def admin_stats():
         role = row['role'].lower()
         count = row['count']
         stats['total_users'] += count
-        if role in stats:
-            stats[role] = count
+        
+        if role == 'donor':
+            stats['donors'] += count
+        elif role == 'ngo':
+            stats['ngos'] += count
+        elif role == 'delivery':
+            stats['delivery'] += count
             
     # Donation Stats
     donations_count = conn.execute('SELECT COUNT(*) as count FROM donations').fetchone()['count']
@@ -584,6 +597,79 @@ def admin_donation_analytics():
             stats['timeline'][date] = stats['timeline'].get(date, 0) + 1
 
     return jsonify(stats)
+
+# --- Emergency Broadcast System ---
+
+@app.route('/api/broadcast/create', methods=['POST'])
+def create_broadcast():
+    data = request.json
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        cursor.execute('''
+            INSERT INTO emergency_broadcasts (ngo_id, title, description, area, contact_details, level, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data['ngo_id'],
+            data['title'],
+            data['description'],
+            data['area'],
+            data['contact_details'],
+            data['level'],
+            timestamp
+        ))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True, 'message': 'Emergency Broadcast Published'})
+    except Exception as e:
+        print(e)
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/broadcast/active')
+def get_active_broadcast():
+    conn = get_db_connection()
+    # Fetch most recent active
+    row = conn.execute('SELECT * FROM emergency_broadcasts WHERE status = "Active" ORDER BY id DESC LIMIT 1').fetchone()
+    conn.close()
+    
+    if row:
+        return jsonify(dict(row))
+    return jsonify(None)
+
+@app.route('/api/broadcast/resolve', methods=['POST'])
+def resolve_broadcast():
+    data = request.json
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('UPDATE emergency_broadcasts SET status = "Resolved" WHERE id = ?', (data['id'],))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/broadcast/delete/<int:id>', methods=['DELETE'])
+def delete_broadcast(id):
+    try:
+        conn = get_db_connection()
+        conn.execute("DELETE FROM emergency_broadcasts WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/broadcast/ngo/<int:ngo_id>', methods=['GET'])
+def get_ngo_broadcasts(ngo_id):
+    conn = get_db_connection()
+    rows = conn.execute('SELECT * FROM emergency_broadcasts WHERE ngo_id = ? ORDER BY id DESC', (ngo_id,)).fetchall()
+    conn.close()
+    return jsonify([dict(row) for row in rows])
 
 if __name__ == '__main__':
     print("\n--------------------------------------------")
